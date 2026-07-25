@@ -156,6 +156,7 @@ function editarProyecto(index) {
   document.getElementById('pEstado').value     = p.estado;
   document.getElementById('pTags').value       = p.tags.join(', ');
   document.getElementById('pUrl').value        = p.url || '';
+  document.getElementById('pGithubUrl').value  = p.githubUrl || '';
   document.getElementById('pColor').value      = p.color;
   document.querySelectorAll('.color-opt').forEach(o => {
     o.classList.toggle('active', o.dataset.color === p.color);
@@ -193,6 +194,7 @@ proyectoForm.addEventListener('submit', e => {
     estado:      document.getElementById('pEstado').value,
     tags:        document.getElementById('pTags').value.split(',').map(t => t.trim()).filter(Boolean),
     url:         document.getElementById('pUrl').value.trim(),
+    githubUrl:   document.getElementById('pGithubUrl').value.trim(),
     color:       document.getElementById('pColor').value,
     id:          Date.now(),
     githubRepo:  currentLinkedRepo || null,
@@ -392,7 +394,8 @@ function fillFormFromRepo(repo) {
   document.getElementById('pCategoria').value = cat;
   document.getElementById('pEstado').value    = repo.archived ? 'Completado' : 'En Progreso';
   document.getElementById('pTags').value      = tags.join(', ');
-  document.getElementById('pUrl').value       = repo.html_url;
+  document.getElementById('pUrl').value       = repo.homepage || ''; // URL de la web del proyecto
+  document.getElementById('pGithubUrl').value = repo.html_url;       // URL del repo GitHub
   document.getElementById('pColor').value     = color;
 
   // seleccionar color visualmente si coincide
