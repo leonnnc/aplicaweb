@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="nav">
+    <span class="nav-logo">Portfolio</span>
+    <ul class="nav-menu">
+      <li><a href="#inicio">Inicio</a></li>
+      <li><a href="#trabajos">Trabajos</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO / CARRUSEL -->
+  <section id="inicio" class="hero">
+    <div class="carousel">
+      <div class="carousel-track" id="carouselTrack">
+
+        <div class="slide">
+          <h1>Diseño <span>y</span> Desarrollo</h1>
+          <p>Trabajo con cuidado en cada detalle.</p>
+          <a href="#trabajos" class="link-arrow">Ver trabajos ↓</a>
+        </div>
+
+        <div class="slide">
+          <h1>Proyectos <span>con</span> Propósito</h1>
+          <p>Cada línea de código tiene una razón.</p>
+          <a href="#trabajos" class="link-arrow">Explorar ↓</a>
+        </div>
+
+        <div class="slide">
+          <h1>Siempre <span>en</span> Movimiento</h1>
+          <p>Aprendiendo y construyendo sin parar.</p>
+          <a href="#contacto" class="link-arrow">Hablemos ↓</a>
+        </div>
+
+      </div>
+      <div class="carousel-controls">
+        <button id="prevBtn">←</button>
+        <div class="carousel-dots" id="carouselDots">
+          <span class="dot active" data-index="0"></span>
+          <span class="dot" data-index="1"></span>
+          <span class="dot" data-index="2"></span>
+        </div>
+        <button id="nextBtn">→</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRABAJOS: cada uno ocupa todo el ancho -->
+  <section id="trabajos" class="trabajos">
+
+    <div class="trabajo" data-num="01">
+      <div class="trabajo-imagen img-1"></div>
+      <div class="trabajo-info">
+        <span class="trabajo-num">01</span>
+        <h2>Proyecto Web</h2>
+        <p>Aplicación web moderna construida con React y Node.js. Autenticación, dashboard y API REST completa.</p>
+        <div class="trabajo-tags">
+          <span>React</span><span>Node.js</span><span>MongoDB</span>
+        </div>
+        <a href="#" class="btn-outline">Ver proyecto →</a>
+      </div>
+    </div>
+
+    <div class="trabajo inverso" data-num="02">
+      <div class="trabajo-imagen img-2"></div>
+      <div class="trabajo-info">
+        <span class="trabajo-num">02</span>
+        <h2>Diseño UI/UX</h2>
+        <p>Diseño de interfaz para aplicación móvil. Flujo completo desde wireframe hasta prototipo interactivo.</p>
+        <div class="trabajo-tags">
+          <span>Figma</span><span>UI/UX</span><span>Prototipo</span>
+        </div>
+        <a href="#" class="btn-outline">Ver proyecto →</a>
+      </div>
+    </div>
+
+    <div class="trabajo" data-num="03">
+      <div class="trabajo-imagen img-3"></div>
+      <div class="trabajo-info">
+        <span class="trabajo-num">03</span>
+        <h2>App Mobile</h2>
+        <p>Aplicación de gestión de tareas para Android e iOS con sincronización en tiempo real.</p>
+        <div class="trabajo-tags">
+          <span>Flutter</span><span>Dart</span><span>Firebase</span>
+        </div>
+        <a href="#" class="btn-outline">Ver proyecto →</a>
+      </div>
+    </div>
+
+    <div class="trabajo inverso" data-num="04">
+      <div class="trabajo-imagen img-4"></div>
+      <div class="trabajo-info">
+        <span class="trabajo-num">04</span>
+        <h2>E-commerce</h2>
+        <p>Tienda online completa con carrito de compras, pasarela de pagos y panel de administración.</p>
+        <div class="trabajo-tags">
+          <span>HTML</span><span>CSS</span><span>JavaScript</span>
+        </div>
+        <a href="#" class="btn-outline">Ver proyecto →</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto" class="contacto">
+    <h2>¿Trabajamos juntos?</h2>
+    <p>Cuéntame tu idea y lo construimos.</p>
+    <form class="form" id="contactoForm">
+      <input type="text" placeholder="Nombre" required />
+      <input type="email" placeholder="Email" required />
+      <textarea placeholder="Mensaje..." rows="4" required></textarea>
+      <button type="submit">Enviar</button>
+    </form>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span>Portfolio 2026</span>
+    <div class="footer-links">
+      <a href="#">GitHub</a>
+      <a href="#">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
