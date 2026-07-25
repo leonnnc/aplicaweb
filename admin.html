@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Portfolio</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <p class="login-logo">Panel de Control</p>
+      <h2>Acceso</h2>
+      <form id="loginForm">
+        <input type="password" id="loginPass" placeholder="Contraseña" required />
+        <button type="submit">Entrar</button>
+        <p class="login-error" id="loginError">Contraseña incorrecta</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div class="panel" id="panel" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">Panel</div>
+      <nav class="sidebar-nav">
+        <a href="#" class="active" data-view="proyectos">Proyectos</a>
+        <a href="#" data-view="nuevo">Agregar</a>
+        <a href="index.html" target="_blank">Ver web ↗</a>
+      </nav>
+      <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <main class="main">
+
+      <!-- VISTA: LISTA DE PROYECTOS -->
+      <div class="view" id="viewProyectos">
+        <div class="main-header">
+          <h1>Proyectos</h1>
+          <button class="btn-add" data-view="nuevo">+ Agregar</button>
+        </div>
+        <div class="proyectos-lista" id="proyectosLista">
+          <!-- se genera con JS -->
+        </div>
+      </div>
+
+      <!-- VISTA: FORMULARIO NUEVO / EDITAR -->
+      <div class="view" id="viewNuevo" style="display:none">
+        <div class="main-header">
+          <h1 id="formTitle">Nuevo Proyecto</h1>
+          <button class="btn-back" data-view="proyectos">← Volver</button>
+        </div>
+        <form class="proyecto-form" id="proyectoForm">
+          <input type="hidden" id="proyectoId" />
+
+          <div class="form-group">
+            <label>Nombre del proyecto</label>
+            <input type="text" id="pNombre" placeholder="Ej: App de delivery" required />
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea id="pDesc" rows="3" placeholder="Descripción breve del proyecto..." required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Categoría</label>
+              <select id="pCategoria">
+                <option value="web">Web</option>
+                <option value="diseño">Diseño</option>
+                <option value="app">App</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Estado</label>
+              <select id="pEstado">
+                <option value="En Progreso">En Progreso</option>
+                <option value="Completado">Completado</option>
+                <option value="Próximamente">Próximamente</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Tags <span>(separados por coma)</span></label>
+            <input type="text" id="pTags" placeholder="Ej: React, Node.js, MongoDB" />
+          </div>
+
+          <div class="form-group">
+            <label>Color de fondo</label>
+            <div class="color-options" id="colorOptions">
+              <span class="color-opt active" data-color="linear-gradient(145deg,#1a1a2e,#4a3f6b)" style="background:linear-gradient(145deg,#1a1a2e,#4a3f6b)"></span>
+              <span class="color-opt" data-color="linear-gradient(145deg,#1c1c1c,#3a2a2a)" style="background:linear-gradient(145deg,#1c1c1c,#3a2a2a)"></span>
+              <span class="color-opt" data-color="linear-gradient(145deg,#0a1628,#1a3a4a)" style="background:linear-gradient(145deg,#0a1628,#1a3a4a)"></span>
+              <span class="color-opt" data-color="linear-gradient(145deg,#1a1a0a,#2a3a1a)" style="background:linear-gradient(145deg,#1a1a0a,#2a3a1a)"></span>
+              <span class="color-opt" data-color="linear-gradient(145deg,#2a1a1a,#4a2a2a)" style="background:linear-gradient(145deg,#2a1a1a,#4a2a2a)"></span>
+              <span class="color-opt" data-color="linear-gradient(145deg,#0a2a1a,#1a4a3a)" style="background:linear-gradient(145deg,#0a2a1a,#1a4a3a)"></span>
+            </div>
+            <input type="hidden" id="pColor" value="linear-gradient(145deg,#1a1a2e,#4a3f6b)" />
+          </div>
+
+          <div class="form-group">
+            <label>URL del proyecto <span>(opcional)</span></label>
+            <input type="url" id="pUrl" placeholder="https://..." />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-save">Guardar proyecto</button>
+            <button type="button" class="btn-cancel" data-view="proyectos">Cancelar</button>
+          </div>
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

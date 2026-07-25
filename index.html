@@ -15,6 +15,7 @@
       <li><a href="#inicio">Inicio</a></li>
       <li><a href="#trabajos">Trabajos</a></li>
       <li><a href="#contacto">Contacto</a></li>
+      <li><a href="admin.html">Admin</a></li>
     </ul>
   </nav>
 
@@ -54,61 +55,11 @@
     </div>
   </section>
 
-  <!-- TRABAJOS: cada uno ocupa todo el ancho -->
+  <!-- TRABAJOS: generados dinámicamente desde localStorage -->
   <section id="trabajos" class="trabajos">
-
-    <div class="trabajo" data-num="01">
-      <div class="trabajo-imagen img-1"></div>
-      <div class="trabajo-info">
-        <span class="trabajo-num">01</span>
-        <h2>Proyecto Web</h2>
-        <p>Aplicación web moderna construida con React y Node.js. Autenticación, dashboard y API REST completa.</p>
-        <div class="trabajo-tags">
-          <span>React</span><span>Node.js</span><span>MongoDB</span>
-        </div>
-        <a href="#" class="btn-outline">Ver proyecto →</a>
-      </div>
+    <div id="trabajosContainer">
+      <!-- Los proyectos se insertan aquí desde script.js -->
     </div>
-
-    <div class="trabajo inverso" data-num="02">
-      <div class="trabajo-imagen img-2"></div>
-      <div class="trabajo-info">
-        <span class="trabajo-num">02</span>
-        <h2>Diseño UI/UX</h2>
-        <p>Diseño de interfaz para aplicación móvil. Flujo completo desde wireframe hasta prototipo interactivo.</p>
-        <div class="trabajo-tags">
-          <span>Figma</span><span>UI/UX</span><span>Prototipo</span>
-        </div>
-        <a href="#" class="btn-outline">Ver proyecto →</a>
-      </div>
-    </div>
-
-    <div class="trabajo" data-num="03">
-      <div class="trabajo-imagen img-3"></div>
-      <div class="trabajo-info">
-        <span class="trabajo-num">03</span>
-        <h2>App Mobile</h2>
-        <p>Aplicación de gestión de tareas para Android e iOS con sincronización en tiempo real.</p>
-        <div class="trabajo-tags">
-          <span>Flutter</span><span>Dart</span><span>Firebase</span>
-        </div>
-        <a href="#" class="btn-outline">Ver proyecto →</a>
-      </div>
-    </div>
-
-    <div class="trabajo inverso" data-num="04">
-      <div class="trabajo-imagen img-4"></div>
-      <div class="trabajo-info">
-        <span class="trabajo-num">04</span>
-        <h2>E-commerce</h2>
-        <p>Tienda online completa con carrito de compras, pasarela de pagos y panel de administración.</p>
-        <div class="trabajo-tags">
-          <span>HTML</span><span>CSS</span><span>JavaScript</span>
-        </div>
-        <a href="#" class="btn-outline">Ver proyecto →</a>
-      </div>
-    </div>
-
   </section>
 
   <!-- CONTACTO -->
