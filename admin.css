@@ -593,3 +593,223 @@ a { text-decoration: none; color: inherit; }
   text-transform: uppercase;
   color: var(--soft);
 }
+
+/* ===== BUSCADOR GITHUB INLINE ===== */
+.nombre-wrap {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.nombre-wrap input {
+  flex: 1;
+}
+
+.btn-gh-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--soft);
+  padding: 10px 16px;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: var(--font);
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-gh-search:hover { border-color: var(--text); color: var(--text); }
+.btn-gh-search.loading { opacity: 0.5; pointer-events: none; }
+
+/* Dropdown repos */
+.gh-dropdown {
+  margin-top: 8px;
+  background: var(--bg2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  max-height: 360px;
+  display: flex;
+  flex-direction: column;
+}
+
+.gh-dropdown-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#ghDropdownStatus {
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+#ghDropdownStatus.loading::after {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  border: 1.5px solid var(--soft);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+#ghDropdownSearch {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+#ghDropdownSearch:focus { border-color: var(--text); }
+#ghDropdownSearch::placeholder { color: var(--soft); }
+
+.gh-dropdown-list {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gh-repo-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.gh-repo-item:hover { background: var(--bg3); }
+.gh-repo-item:last-child { border-bottom: none; }
+
+.gh-repo-item-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-repo-item-desc {
+  font-size: 0.75rem;
+  color: var(--soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.gh-repo-item-lang {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--soft);
+  border: 1px solid var(--border);
+  padding: 2px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.gh-repo-item-stars {
+  font-size: 0.72rem;
+  color: var(--soft);
+}
+
+/* Badge repo vinculado */
+.gh-linked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: var(--soft);
+  margin-top: -12px;
+}
+
+.gh-linked svg { flex-shrink: 0; }
+
+.gh-linked span { flex: 1; }
+
+.gh-linked button {
+  background: none;
+  border: none;
+  color: var(--soft);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  transition: color 0.2s;
+}
+
+.gh-linked button:hover { color: var(--danger); }
+
+/* Configuración GitHub colapsable */
+.gh-settings {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  max-width: 640px;
+}
+
+.gh-settings-toggle {
+  background: none;
+  border: none;
+  color: var(--soft);
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.gh-settings-toggle:hover { color: var(--text); }
+
+.gh-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.btn-fetch {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--soft);
+  padding: 10px 20px;
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: var(--font);
+  border-radius: 2px;
+  align-self: flex-start;
+  transition: all 0.2s;
+}
+
+.btn-fetch:hover { border-color: var(--text); color: var(--text); }
+
+@keyframes spin { to { transform: rotate(360deg); } }

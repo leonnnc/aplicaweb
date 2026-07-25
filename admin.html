@@ -30,7 +30,6 @@
       <nav class="sidebar-nav">
         <a href="#" class="active" data-view="proyectos">Proyectos</a>
         <a href="#" data-view="nuevo">Agregar</a>
-        <a href="#" data-view="github">GitHub Import</a>
         <a href="index.html" target="_blank">Ver web ↗</a>
       </nav>
       <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
@@ -45,9 +44,7 @@
           <h1>Proyectos</h1>
           <button class="btn-add" data-view="nuevo">+ Agregar</button>
         </div>
-        <div class="proyectos-lista" id="proyectosLista">
-          <!-- se genera con JS -->
-        </div>
+        <div class="proyectos-lista" id="proyectosLista"></div>
       </div>
 
       <!-- VISTA: FORMULARIO NUEVO / EDITAR -->
@@ -56,12 +53,38 @@
           <h1 id="formTitle">Nuevo Proyecto</h1>
           <button class="btn-back" data-view="proyectos">← Volver</button>
         </div>
+
         <form class="proyecto-form" id="proyectoForm">
           <input type="hidden" id="proyectoId" />
 
+          <!-- CAMPO NOMBRE + BUSCADOR GITHUB -->
           <div class="form-group">
             <label>Nombre del proyecto</label>
-            <input type="text" id="pNombre" placeholder="Ej: App de delivery" required />
+            <div class="nombre-wrap">
+              <input type="text" id="pNombre" placeholder="Escribe el nombre o busca en GitHub..." required autocomplete="off" />
+              <button type="button" class="btn-gh-search" id="btnGhSearch" title="Buscar en GitHub">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                Buscar en GitHub
+              </button>
+            </div>
+
+            <!-- DROPDOWN de repos GitHub -->
+            <div class="gh-dropdown" id="ghDropdown" style="display:none">
+              <div class="gh-dropdown-header">
+                <span id="ghDropdownStatus">Cargando repos...</span>
+                <input type="text" id="ghDropdownSearch" placeholder="Filtrar repositorios..." />
+              </div>
+              <div class="gh-dropdown-list" id="ghDropdownList"></div>
+            </div>
+          </div>
+
+          <!-- BADGE de repo vinculado -->
+          <div class="gh-linked" id="ghLinked" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span id="ghLinkedName">repo vinculado</span>
+            <button type="button" id="btnUnlink">✕</button>
           </div>
 
           <div class="form-group">
@@ -117,40 +140,25 @@
             <button type="button" class="btn-cancel" data-view="proyectos">Cancelar</button>
           </div>
         </form>
-      </div>
 
-      <!-- VISTA: GITHUB IMPORT -->
-      <div class="view" id="viewGithub" style="display:none">
-        <div class="main-header">
-          <h1>Importar desde GitHub</h1>
-        </div>
-
-        <!-- Configuración de usuario -->
-        <div class="gh-config">
-          <div class="form-group">
-            <label>Usuario de GitHub</label>
-            <div class="gh-input-row">
+        <!-- Config GitHub (colapsa) -->
+        <div class="gh-settings" id="ghSettings">
+          <button type="button" class="gh-settings-toggle" id="ghSettingsToggle">
+            ⚙ Configuración de GitHub
+          </button>
+          <div class="gh-settings-body" id="ghSettingsBody" style="display:none">
+            <div class="form-group">
+              <label>Usuario de GitHub</label>
               <input type="text" id="ghUser" placeholder="Ej: leonnnc" />
-              <button class="btn-fetch" id="btnFetchRepos">Buscar repos</button>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Token personal <span>(opcional — para repos privados y más rate limit)</span></label>
-            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" />
+            <div class="form-group">
+              <label>Token personal <span>(para repos privados y mayor rate limit)</span></label>
+              <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" />
+            </div>
+            <button type="button" class="btn-fetch" id="btnSaveGhConfig">Guardar configuración</button>
           </div>
         </div>
 
-        <!-- Estado de carga -->
-        <div class="gh-status" id="ghStatus"></div>
-
-        <!-- Lista de repos -->
-        <div class="gh-repos" id="ghRepos"></div>
-
-        <!-- Botón importar seleccionados -->
-        <div class="gh-footer" id="ghFooter" style="display:none">
-          <span id="ghSelected">0 seleccionados</span>
-          <button class="btn-save" id="btnImport">Importar seleccionados</button>
-        </div>
       </div>
 
     </main>
