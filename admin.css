@@ -418,3 +418,178 @@ a { text-decoration: none; color: inherit; }
   .proyecto-cat, .proyecto-estado { display: none; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
 }
+
+/* ===== GITHUB IMPORT ===== */
+.gh-config {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 600px;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.gh-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.gh-input-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.gh-input-row input:focus { border-color: var(--text); }
+.gh-input-row input::placeholder { color: var(--soft); }
+
+.btn-fetch {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--soft);
+  padding: 10px 20px;
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: var(--font);
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-fetch:hover { border-color: var(--text); color: var(--text); }
+.btn-fetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Status */
+.gh-status {
+  font-size: 0.82rem;
+  letter-spacing: 1px;
+  color: var(--soft);
+  margin-bottom: 16px;
+  min-height: 20px;
+}
+
+.gh-status.error { color: var(--danger); }
+.gh-status.loading::after {
+  content: '';
+  display: inline-block;
+  width: 10px; height: 10px;
+  border: 2px solid var(--soft);
+  border-top-color: var(--text);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Grid de repos */
+.gh-repos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 32px;
+}
+
+.gh-repo-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.gh-repo-row:hover { background: var(--bg3); }
+
+.gh-repo-row.selected {
+  border-color: rgba(255,255,255,0.25);
+  background: var(--bg3);
+}
+
+.gh-check {
+  width: 18px; height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  color: var(--text);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.gh-repo-row.selected .gh-check {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.gh-repo-info { overflow: hidden; }
+
+.gh-repo-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gh-repo-desc {
+  font-size: 0.78rem;
+  color: var(--soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.gh-repo-lang {
+  font-size: 0.7rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--soft);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.gh-repo-stars {
+  font-size: 0.75rem;
+  color: var(--soft);
+  white-space: nowrap;
+}
+
+/* Footer de importar */
+.gh-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+}
+
+.gh-footer span {
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--soft);
+}

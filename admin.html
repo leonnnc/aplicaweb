@@ -30,6 +30,7 @@
       <nav class="sidebar-nav">
         <a href="#" class="active" data-view="proyectos">Proyectos</a>
         <a href="#" data-view="nuevo">Agregar</a>
+        <a href="#" data-view="github">GitHub Import</a>
         <a href="index.html" target="_blank">Ver web ↗</a>
       </nav>
       <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
@@ -116,6 +117,40 @@
             <button type="button" class="btn-cancel" data-view="proyectos">Cancelar</button>
           </div>
         </form>
+      </div>
+
+      <!-- VISTA: GITHUB IMPORT -->
+      <div class="view" id="viewGithub" style="display:none">
+        <div class="main-header">
+          <h1>Importar desde GitHub</h1>
+        </div>
+
+        <!-- Configuración de usuario -->
+        <div class="gh-config">
+          <div class="form-group">
+            <label>Usuario de GitHub</label>
+            <div class="gh-input-row">
+              <input type="text" id="ghUser" placeholder="Ej: leonnnc" />
+              <button class="btn-fetch" id="btnFetchRepos">Buscar repos</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Token personal <span>(opcional — para repos privados y más rate limit)</span></label>
+            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" />
+          </div>
+        </div>
+
+        <!-- Estado de carga -->
+        <div class="gh-status" id="ghStatus"></div>
+
+        <!-- Lista de repos -->
+        <div class="gh-repos" id="ghRepos"></div>
+
+        <!-- Botón importar seleccionados -->
+        <div class="gh-footer" id="ghFooter" style="display:none">
+          <span id="ghSelected">0 seleccionados</span>
+          <button class="btn-save" id="btnImport">Importar seleccionados</button>
+        </div>
       </div>
 
     </main>

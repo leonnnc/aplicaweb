@@ -42,6 +42,7 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
 const views = {
   proyectos: document.getElementById('viewProyectos'),
   nuevo:     document.getElementById('viewNuevo'),
+  github:    document.getElementById('viewGithub'),
 };
 
 function showView(name) {
@@ -203,3 +204,170 @@ function showToast(msg) {
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2500);
 }
+
+// ===== GITHUB IMPORT =====
+const LANG_COLORS = {
+  JavaScript: 'linear-gradient(145deg,#1a1a0a,#2a2a10)',
+  TypeScript: 'linear-gradient(145deg,#0a1628,#1a3a4a)',
+  Python:     'linear-gradient(145deg,#0a1a0a,#1a3a2a)',
+  HTML:       'linear-gradient(145deg,#2a1a0a,#3a2a10)',
+  CSS:        'linear-gradient(145deg,#0a0a2a,#1a1a4a)',
+  Vue:        'linear-gradient(145deg,#0a2a1a,#1a4a3a)',
+  React:      'linear-gradient(145deg,#0a1a2a,#1a2a4a)',
+  Dart:       'linear-gradient(145deg,#0a1a28,#1a3a48)',
+  PHP:        'linear-gradient(145deg,#1a0a2a,#2a1a3a)',
+  default:    'linear-gradient(145deg,#1a1a2e,#4a3f6b)',
+};
+
+const LANG_CATEGORY = {
+  JavaScript: 'web', TypeScript: 'web', HTML: 'web', CSS: 'web',
+  Vue: 'web', React: 'web', PHP: 'web',
+  Python: 'app', Dart: 'app', Swift: 'app', Kotlin: 'app',
+  Figma: 'diseño',
+};
+
+let ghReposData = [];
+let selectedRepos = new Set();
+
+document.getElementById('btnFetchRepos').addEventListener('click', fetchGithubRepos);
+document.getElementById('ghUser').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); fetchGithubRepos(); }
+});
+
+async function fetchGithubRepos() {
+  const user  = document.getElementById('ghUser').value.trim();
+  const token = document.getElementById('ghToken').value.trim();
+  const status = document.getElementById('ghStatus');
+  const reposEl = document.getElementById('ghRepos');
+  const footer  = document.getElementById('ghFooter');
+  const btn     = document.getElementById('btnFetchRepos');
+
+  if (!user) {
+    status.textContent = 'Ingresa un usuario de GitHub.';
+    status.className = 'gh-status error';
+    return;
+  }
+
+  status.textContent = 'Buscando repositorios';
+  status.className = 'gh-status loading';
+  reposEl.innerHTML = '';
+  footer.style.display = 'none';
+  btn.disabled = true;
+  selectedRepos.clear();
+  ghReposData = [];
+
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&sort=updated`,
+      { headers }
+    );
+
+    if (res.status === 404) throw new Error('Usuario no encontrado.');
+    if (res.status === 403) throw new Error('Rate limit alcanzado. Agrega un token personal.');
+    if (!res.ok) throw new Error(`Error ${res.status} de la API de GitHub.`);
+
+    const repos = await res.json();
+
+    // Filtrar forks si se desea (puedes quitar el filtro)
+    ghReposData = repos.filter(r => !r.fork);
+
+    if (ghReposData.length === 0) {
+      status.textContent = 'No se encontraron repositorios propios.';
+      status.className = 'gh-status';
+      btn.disabled = false;
+      return;
+    }
+
+    status.textContent = `${ghReposData.length} repositorios encontrados`;
+    status.className = 'gh-status';
+
+    renderGhRepos();
+    footer.style.display = 'flex';
+
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'gh-status error';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderGhRepos() {
+  const reposEl = document.getElementById('ghRepos');
+
+  reposEl.innerHTML = ghReposData.map((repo, i) => {
+    const lang  = repo.language || '—';
+    const desc  = repo.description || 'Sin descripción';
+    const stars = repo.stargazers_count;
+
+    return `
+      <div class="gh-repo-row" data-index="${i}">
+        <div class="gh-check">✓</div>
+        <div class="gh-repo-info">
+          <div class="gh-repo-name">${repo.name}</div>
+          <div class="gh-repo-desc">${desc}</div>
+        </div>
+        <div class="gh-repo-lang">${lang}</div>
+        <div class="gh-repo-stars">★ ${stars}</div>
+      </div>
+    `;
+  }).join('');
+
+  reposEl.querySelectorAll('.gh-repo-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = +row.dataset.index;
+      if (selectedRepos.has(idx)) {
+        selectedRepos.delete(idx);
+        row.classList.remove('selected');
+      } else {
+        selectedRepos.add(idx);
+        row.classList.add('selected');
+      }
+      document.getElementById('ghSelected').textContent =
+        `${selectedRepos.size} seleccionado${selectedRepos.size !== 1 ? 's' : ''}`;
+    });
+  });
+}
+
+document.getElementById('btnImport').addEventListener('click', () => {
+  if (selectedRepos.size === 0) return;
+
+  const list = getProyectos();
+  let importados = 0;
+
+  selectedRepos.forEach(idx => {
+    const repo = ghReposData[idx];
+    const lang = repo.language || '';
+    const tags = [lang, ...( repo.topics || [])].filter(Boolean).slice(0, 4);
+
+    // Evitar duplicados por URL
+    const yaExiste = list.some(p => p.url === repo.html_url);
+    if (yaExiste) return;
+
+    list.push({
+      id:          Date.now() + idx,
+      nombre:      repo.name,
+      descripcion: repo.description || 'Repositorio de GitHub.',
+      categoria:   LANG_CATEGORY[lang] || 'web',
+      estado:      repo.archived ? 'Completado' : 'En Progreso',
+      tags:        tags.length ? tags : [lang || 'Código'],
+      color:       LANG_COLORS[lang] || LANG_COLORS.default,
+      url:         repo.html_url,
+      github:      true,
+    });
+    importados++;
+  });
+
+  saveProyectos(list);
+  showToast(`${importados} proyecto${importados !== 1 ? 's' : ''} importado${importados !== 1 ? 's' : ''}`);
+
+  // Resetear selección
+  selectedRepos.clear();
+  document.querySelectorAll('.gh-repo-row.selected').forEach(r => r.classList.remove('selected'));
+  document.getElementById('ghSelected').textContent = '0 seleccionados';
+
+  showView('proyectos');
+});
