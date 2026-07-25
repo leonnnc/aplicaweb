@@ -238,25 +238,26 @@ const ghDropdownStatus  = document.getElementById('ghDropdownStatus');
 const ghDropdownSearch  = document.getElementById('ghDropdownSearch');
 
 btnGhSearch.addEventListener('click', async () => {
-  const cfg = getGhConfig();
+  const cfg  = getGhConfig();
   const user = cfg.user || document.getElementById('ghUser').value.trim();
 
   if (!user) {
     // Abrir config si no hay usuario guardado
     document.getElementById('ghSettingsBody').style.display = 'flex';
     document.getElementById('ghUser').focus();
-    showToast('Primero configura tu usuario de GitHub');
+    showToast('Primero configura tu usuario de GitHub ⚙');
     return;
   }
 
-  ghDropdown.style.display = 'flex';
-  ghDropdownSearch.value = '';
-
+  // Si el dropdown ya está abierto con datos, solo mostrarlo
   if (ghReposCache.length > 0) {
+    ghDropdown.style.display = 'flex';
+    ghDropdownSearch.value = '';
     renderDropdownRepos(ghReposCache);
     return;
   }
 
+  ghDropdown.style.display = 'flex';
   await loadGhRepos(user, cfg.token || '');
 });
 
@@ -267,29 +268,66 @@ async function loadGhRepos(user, token) {
   ghDropdown.style.display = 'flex';
   btnGhSearch.classList.add('loading');
 
+  // Primero verificar que el usuario existe
   const headers = { 'Accept': 'application/vnd.github+json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res = await fetch(
-      `https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&sort=updated`,
+    // Paso 1: verificar usuario
+    const userRes = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(user)}`,
       { headers }
     );
 
-    if (res.status === 404) throw new Error('Usuario no encontrado');
-    if (res.status === 403) throw new Error('Rate limit. Agrega un token.');
-    if (!res.ok) throw new Error(`Error ${res.status}`);
+    if (userRes.status === 404) {
+      throw new Error(`Usuario "${user}" no encontrado en GitHub. Verifica el nombre exacto.`);
+    }
+    if (userRes.status === 401) {
+      throw new Error('Token inválido. Revisa tu token personal de GitHub.');
+    }
+    if (userRes.status === 403) {
+      const remaining = userRes.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        throw new Error('Límite de la API alcanzado. Agrega un token personal en ⚙ Configuración.');
+      }
+      throw new Error('Acceso denegado (403). Agrega un token personal.');
+    }
+    if (!userRes.ok) {
+      throw new Error(`Error al verificar usuario: ${userRes.status}`);
+    }
 
-    const repos = await res.json();
-    ghReposCache = repos.filter(r => !r.fork);
+    // Paso 2: traer repos
+    const reposRes = await fetch(
+      `https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&sort=updated&type=owner`,
+      { headers }
+    );
+
+    if (!reposRes.ok) {
+      throw new Error(`Error al obtener repositorios: ${reposRes.status}`);
+    }
+
+    const repos = await reposRes.json();
+    ghReposCache = repos; // incluir forks también por si acaso
+
+    if (ghReposCache.length === 0) {
+      ghDropdownStatus.className = '';
+      ghDropdownStatus.textContent = 'Este usuario no tiene repositorios públicos';
+      return;
+    }
 
     ghDropdownStatus.className = '';
-    ghDropdownStatus.textContent = `${ghReposCache.length} repositorios`;
+    ghDropdownStatus.textContent = `${ghReposCache.length} repositorios encontrados`;
     renderDropdownRepos(ghReposCache);
 
   } catch (err) {
-    ghDropdownStatus.textContent = err.message;
     ghDropdownStatus.className = 'error';
+    // Distinguir errores de red de errores de la API
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      ghDropdownStatus.textContent = 'Sin conexión a internet. Verifica tu red.';
+    } else {
+      ghDropdownStatus.textContent = err.message;
+    }
+    console.error('GitHub API error:', err);
   } finally {
     btnGhSearch.classList.remove('loading');
   }
