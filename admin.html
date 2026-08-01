@@ -24,12 +24,24 @@
   <!-- PANEL -->
   <div class="panel" id="panel" style="display:none">
 
+    <!-- TOPBAR MOBILE -->
+    <div class="mobile-topbar">
+      <span class="mobile-topbar-logo">Panel</span>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <!-- OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">Panel</div>
       <nav class="sidebar-nav">
         <a href="#" class="active" data-view="proyectos">Proyectos</a>
         <a href="#" data-view="nuevo">Agregar</a>
+        <a href="#" data-view="ajustes">Ajustes</a>
         <a href="index.html" target="_blank">Ver web ↗</a>
       </nav>
       <button class="logout-btn" id="logoutBtn">Cerrar sesión</button>
@@ -118,7 +130,25 @@
           </div>
 
           <div class="form-group">
-            <label>Color de fondo</label>
+            <label>Imagen del proyecto <span>(JPG, PNG, WebP — recomendado 800×600)</span></label>
+            <div class="img-upload-area" id="imgUploadArea">
+              <div class="img-upload-placeholder" id="imgPlaceholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18"/>
+                  <circle cx="7" cy="6" r="1" fill="currentColor" stroke="none"/>
+                  <circle cx="10" cy="6" r="1" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>Arrastra una imagen o haz clic para seleccionar</span>
+              </div>
+              <img id="imgPreview" class="img-preview" style="display:none" alt="Preview" />
+              <button type="button" class="img-remove-btn" id="imgRemoveBtn" style="display:none">✕ Quitar imagen</button>
+            </div>
+            <input type="file" id="pImagen" accept="image/*" style="display:none" />
+          </div>
+
+          <div class="form-group">
+            <label>Color de fondo <span>(se usa cuando no hay imagen)</span></label>
             <div class="color-options" id="colorOptions">
               <span class="color-opt active" data-color="linear-gradient(145deg,#1a1a2e,#4a3f6b)" style="background:linear-gradient(145deg,#1a1a2e,#4a3f6b)"></span>
               <span class="color-opt" data-color="linear-gradient(145deg,#1c1c1c,#3a2a2a)" style="background:linear-gradient(145deg,#1c1c1c,#3a2a2a)"></span>
@@ -159,11 +189,56 @@
             <div class="form-group">
               <label>Token personal <span>(para repos privados y mayor rate limit)</span></label>
               <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" />
+              <small class="field-hint">El token se guarda en localStorage. Úsalo solo desde tu equipo personal, nunca en un ordenador público.</small>
             </div>
             <button type="button" class="btn-fetch" id="btnSaveGhConfig">Guardar configuración</button>
           </div>
         </div>
 
+      </div>
+
+      <!-- VISTA: AJUSTES -->
+      <div class="view" id="viewAjustes" style="display:none">
+        <div class="main-header">
+          <h1>Ajustes</h1>
+        </div>
+
+        <form class="proyecto-form" id="ajustesForm">
+
+          <div class="form-group">
+            <label>Título del portfolio</label>
+            <input type="text" id="aTitle" placeholder="Ej: Mi Portfolio" />
+          </div>
+
+          <div class="form-group">
+            <label>URL de GitHub <span>(aparece en el footer)</span></label>
+            <input type="url" id="aGithub" placeholder="https://github.com/usuario" />
+          </div>
+
+          <div class="form-group">
+            <label>URL de LinkedIn <span>(aparece en el footer)</span></label>
+            <input type="url" id="aLinkedin" placeholder="https://linkedin.com/in/usuario" />
+          </div>
+
+          <div class="form-group">
+            <label>Email de contacto <span>(para el formulario de contacto)</span></label>
+            <input type="email" id="aEmail" placeholder="tu@email.com" />
+          </div>
+
+          <div class="form-group">
+            <label>Formspree Form ID <span>(activa el formulario de contacto real)</span></label>
+            <input type="text" id="aFormspree" placeholder="Ej: xpwzgklv" />
+            <small class="field-hint">
+              Crea una cuenta gratuita en
+              <a href="https://formspree.io" target="_blank" rel="noopener">formspree.io</a>,
+              crea un formulario con tu email y pega aquí el ID (la parte final de la URL del endpoint).
+            </small>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-save">Guardar ajustes</button>
+          </div>
+        </form>
       </div>
 
     </main>

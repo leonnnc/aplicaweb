@@ -16,7 +16,27 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(BASE_DIR, req.url === '/' ? 'index.html' : req.url);
+  // Sanitizar la URL: quitar query string y decodificar
+  const rawUrl = req.url.split('?')[0];
+  let decodedUrl;
+  try {
+    decodedUrl = decodeURIComponent(rawUrl);
+  } catch {
+    res.writeHead(400);
+    res.end('URL inválida');
+    return;
+  }
+
+  const requestedPath = rawUrl === '/' ? 'index.html' : decodedUrl.replace(/^\/+/, '');
+  const filePath = path.join(BASE_DIR, requestedPath);
+
+  // Protección path traversal: el archivo debe estar dentro de BASE_DIR
+  if (!filePath.startsWith(BASE_DIR + path.sep) && filePath !== BASE_DIR) {
+    res.writeHead(403);
+    res.end('Acceso denegado');
+    return;
+  }
+
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext] || 'text/plain';
 
@@ -26,7 +46,10 @@ const server = http.createServer((req, res) => {
       res.end('Archivo no encontrado');
       return;
     }
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'no-store',
+    });
     res.end(data);
   });
 });

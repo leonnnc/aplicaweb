@@ -23,33 +23,11 @@
   <section id="inicio" class="hero">
     <div class="carousel">
       <div class="carousel-track" id="carouselTrack">
-
-        <div class="slide">
-          <h1>Diseño <span>y</span> Desarrollo</h1>
-          <p>Trabajo con cuidado en cada detalle.</p>
-          <a href="#trabajos" class="link-arrow">Ver trabajos ↓</a>
-        </div>
-
-        <div class="slide">
-          <h1>Proyectos <span>con</span> Propósito</h1>
-          <p>Cada línea de código tiene una razón.</p>
-          <a href="#trabajos" class="link-arrow">Explorar ↓</a>
-        </div>
-
-        <div class="slide">
-          <h1>Siempre <span>en</span> Movimiento</h1>
-          <p>Aprendiendo y construyendo sin parar.</p>
-          <a href="#contacto" class="link-arrow">Hablemos ↓</a>
-        </div>
-
+        <!-- Los slides se generan desde script.js -->
       </div>
       <div class="carousel-controls">
         <button id="prevBtn">←</button>
-        <div class="carousel-dots" id="carouselDots">
-          <span class="dot active" data-index="0"></span>
-          <span class="dot" data-index="1"></span>
-          <span class="dot" data-index="2"></span>
-        </div>
+        <div class="carousel-dots" id="carouselDots"></div>
         <button id="nextBtn">→</button>
       </div>
     </div>
@@ -67,9 +45,9 @@
     <h2>¿Trabajamos juntos?</h2>
     <p>Cuéntame tu idea y lo construimos.</p>
     <form class="form" id="contactoForm">
-      <input type="text" placeholder="Nombre" required />
-      <input type="email" placeholder="Email" required />
-      <textarea placeholder="Mensaje..." rows="4" required></textarea>
+      <input type="text"  name="nombre"  placeholder="Nombre"   required />
+      <input type="email" name="email"   placeholder="Email"    required />
+      <textarea           name="mensaje" placeholder="Mensaje..." rows="4" required></textarea>
       <button type="submit">Enviar</button>
     </form>
   </section>

@@ -1,5 +1,10 @@
 // ===== STORAGE KEY (debe coincidir con admin.js) =====
-const STORAGE_KEY = 'portfolio_proyectos';
+const STORAGE_KEY     = 'portfolio_proyectos';
+const SITE_CONFIG_KEY = 'portfolio_site_config';
+
+function getSiteConfig() {
+  return JSON.parse(localStorage.getItem(SITE_CONFIG_KEY) || '{}');
+}
 
 // ===== PROYECTOS POR DEFECTO (se usan si no hay nada en localStorage) =====
 const defaultProyectos = [
@@ -81,13 +86,22 @@ function renderTrabajosPortfolio() {
          </a>`
       : '';
 
-    // Imagen: si hay URL web intentamos screenshot via servicio público
     const imgStyle = `background:${p.color}`;
+
+    // Imagen subida por el usuario, o gradiente + icono de fallback
+    const imgContent = p.imagen
+      ? `<img class="trabajo-screenshot" src="${p.imagen}" alt="Preview de ${p.nombre}" loading="lazy" />`
+      : `<svg class="trabajo-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+           <rect x="3" y="3" width="18" height="18" rx="2"/>
+           <path d="M3 9h18"/>
+           <circle cx="7" cy="6" r="1" fill="currentColor" stroke="none"/>
+           <circle cx="10" cy="6" r="1" fill="currentColor" stroke="none"/>
+         </svg>`;
 
     return `
       <div class="trabajo ${esInverso}">
         <div class="trabajo-imagen" style="${imgStyle}">
-          ${urlWeb ? `<iframe class="trabajo-preview" src="${urlWeb}" loading="lazy" sandbox="allow-scripts allow-same-origin" title="${p.nombre}"></iframe>` : ''}
+          ${imgContent}
         </div>
         <div class="trabajo-info">
           <span class="trabajo-num">${num}</span>
@@ -127,51 +141,144 @@ function initScrollAnimation() {
 }
 
 // ===== CARRUSEL =====
-const track = document.getElementById('carouselTrack');
-const dots  = document.querySelectorAll('.dot');
-const prev  = document.getElementById('prevBtn');
-const next  = document.getElementById('nextBtn');
-const total = dots.length;
+const track    = document.getElementById('carouselTrack');
+const dotsWrap = document.getElementById('carouselDots');
+const prev     = document.getElementById('prevBtn');
+const next     = document.getElementById('nextBtn');
 let current = 0;
 let timer;
+let totalSlides = 0;
 
-function goTo(i) {
-  current = (i + total) % total;
-  track.style.transform = `translateX(-${current * 100}%)`;
-  dots.forEach(d => d.classList.remove('active'));
-  dots[current].classList.add('active');
+function buildCarousel() {
+  const proyectos = getProyectos();
+  totalSlides = proyectos.length;
+
+  // Generar slides con imagen o gradiente
+  track.innerHTML = proyectos.map(p => {
+    const bg = p.imagen
+      ? `background: ${p.color} url('${p.imagen}') center/cover no-repeat`
+      : `background: ${p.color}`;
+
+    const palabras = p.nombre.split(' ');
+    const mitad    = Math.ceil(palabras.length / 2);
+    const titulo1  = palabras.slice(0, mitad).join(' ');
+    const titulo2  = palabras.slice(mitad).join(' ');
+
+    return `
+      <div class="slide slide-proyecto" style="${bg}">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <h1>${titulo1} <span>${titulo2}</span></h1>
+          <p>${p.descripcion.slice(0, 80)}${p.descripcion.length > 80 ? '…' : ''}</p>
+          <a href="#trabajos" class="link-arrow">Ver proyectos ↓</a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Generar dots
+  dotsWrap.innerHTML = proyectos.map((_, i) =>
+    `<span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`
+  ).join('');
+
+  dotsWrap.querySelectorAll('.dot').forEach(d => {
+    d.addEventListener('click', () => { goTo(+d.dataset.index); resetTimer(); });
+  });
 }
 
-function auto() { timer = setInterval(() => goTo(current + 1), 4000); }
-function reset() { clearInterval(timer); auto(); }
+function getDots() { return dotsWrap.querySelectorAll('.dot'); }
 
-next.addEventListener('click', () => { goTo(current + 1); reset(); });
-prev.addEventListener('click', () => { goTo(current - 1); reset(); });
-dots.forEach(d => d.addEventListener('click', () => { goTo(+d.dataset.index); reset(); }));
+function goTo(i) {
+  current = (i + totalSlides) % totalSlides;
+  track.style.transform = `translateX(-${current * 100}%)`;
+  getDots().forEach(d => d.classList.toggle('active', +d.dataset.index === current));
+}
+
+function autoTimer() { timer = setInterval(() => goTo(current + 1), 4000); }
+function resetTimer() { clearInterval(timer); autoTimer(); }
+
+next.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
+prev.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
 
 // Swipe móvil
 let tx = 0;
 track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
 track.addEventListener('touchend', e => {
   const d = tx - e.changedTouches[0].clientX;
-  if (Math.abs(d) > 40) { d > 0 ? goTo(current + 1) : goTo(current - 1); reset(); }
+  if (Math.abs(d) > 40) { d > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
 });
 
-auto();
+buildCarousel();
+autoTimer();
 
 // ===== FORMULARIO CONTACTO =====
-document.getElementById('contactoForm').addEventListener('submit', e => {
+document.getElementById('contactoForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
-  btn.textContent = 'Enviado ✓';
-  btn.style.background = 'var(--text)';
-  btn.style.color = 'var(--bg)';
-  setTimeout(() => {
-    btn.textContent = 'Enviar';
-    btn.style.background = '';
-    btn.style.color = '';
-    e.target.reset();
-  }, 3000);
+  const form = e.target;
+  const btn  = form.querySelector('button');
+  const cfg  = getSiteConfig();
+  const formspreeId = cfg.formspree || '';
+
+  if (!formspreeId) {
+    // Sin Formspree configurado: modo demo (sin envío real)
+    btn.textContent = 'Enviado ✓';
+    btn.style.background = 'var(--text)';
+    btn.style.color = 'var(--bg)';
+    setTimeout(() => {
+      btn.textContent = 'Enviar';
+      btn.style.background = '';
+      btn.style.color = '';
+      form.reset();
+    }, 3000);
+    return;
+  }
+
+  // Con Formspree: envío real
+  btn.textContent = 'Enviando...';
+  btn.disabled = true;
+
+  const data = new FormData(form);
+  // Añadir el email de destino si está configurado
+  if (cfg.email) data.set('_replyto', cfg.email);
+
+  try {
+    const res = await fetch(`https://formspree.io/f/${formspreeId}`, {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (res.ok) {
+      btn.textContent = 'Enviado ✓';
+      btn.style.background = 'var(--text)';
+      btn.style.color = 'var(--bg)';
+      form.reset();
+      setTimeout(() => {
+        btn.textContent = 'Enviar';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.disabled = false;
+      }, 3000);
+    } else {
+      const json = await res.json().catch(() => ({}));
+      const msg  = json.errors ? json.errors.map(err => err.message).join(', ') : 'Error al enviar';
+      btn.textContent = msg;
+      btn.style.color = '#e55';
+      setTimeout(() => {
+        btn.textContent = 'Enviar';
+        btn.style.color = '';
+        btn.disabled = false;
+      }, 4000);
+    }
+  } catch {
+    btn.textContent = 'Sin conexión';
+    btn.style.color = '#e55';
+    setTimeout(() => {
+      btn.textContent = 'Enviar';
+      btn.style.color = '';
+      btn.disabled = false;
+    }, 4000);
+  }
 });
 
 // ===== NAVBAR ACTIVA POR SCROLL =====
@@ -188,3 +295,26 @@ window.addEventListener('scroll', () => {
 
 // ===== INIT =====
 renderTrabajosPortfolio();
+
+// Actualizar footer y título desde la config guardada
+(function applyConfig() {
+  const cfg = getSiteConfig();
+
+  // Título de la página
+  if (cfg.title) {
+    document.title = cfg.title;
+    const logo = document.querySelector('.nav-logo');
+    if (logo) logo.textContent = cfg.title;
+    const footerSpan = document.querySelector('.footer span');
+    if (footerSpan) footerSpan.textContent = cfg.title + ' ' + new Date().getFullYear();
+  }
+
+  // Links del footer
+  const footerLinks = document.querySelectorAll('.footer-links a');
+  if (footerLinks.length >= 1 && cfg.github) {
+    footerLinks[0].href = cfg.github;
+  }
+  if (footerLinks.length >= 2 && cfg.linkedin) {
+    footerLinks[1].href = cfg.linkedin;
+  }
+})();

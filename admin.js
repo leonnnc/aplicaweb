@@ -57,10 +57,39 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   loginPass.value = '';
 });
 
+// ===== HAMBURGUESA MOBILE =====
+const hamburgerBtn    = document.getElementById('hamburgerBtn');
+const sidebarEl       = document.getElementById('sidebar');
+const sidebarOverlay  = document.getElementById('sidebarOverlay');
+
+function openSidebar() {
+  sidebarEl.classList.add('open');
+  sidebarOverlay.classList.add('visible');
+  hamburgerBtn.classList.add('open');
+}
+
+function closeSidebar() {
+  sidebarEl.classList.remove('open');
+  sidebarOverlay.classList.remove('visible');
+  hamburgerBtn.classList.remove('open');
+}
+
+hamburgerBtn.addEventListener('click', () => {
+  sidebarEl.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+
+// Cerrar sidebar al navegar (mobile)
+document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
+  a.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
+});
+
 // ===== VISTAS =====
 const views = {
   proyectos: document.getElementById('viewProyectos'),
   nuevo:     document.getElementById('viewNuevo'),
+  ajustes:   document.getElementById('viewAjustes'),
 };
 
 function showView(name) {
@@ -71,11 +100,14 @@ function showView(name) {
   });
   if (name === 'proyectos') renderProyectos();
   if (name === 'nuevo')     resetForm();
+  if (name === 'ajustes')   loadAjustes();
 }
 
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-view]');
-  if (btn) showView(btn.dataset.view);
+  // Ignorar si el click viene de btn-edit o btn-delete (tienen su propio handler)
+  if (!btn || btn.classList.contains('btn-edit') || btn.classList.contains('btn-delete')) return;
+  showView(btn.dataset.view);
 });
 
 // ===== STORAGE =====
@@ -91,6 +123,34 @@ function getGhConfig() {
 function saveGhConfig(cfg) {
   localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(cfg));
 }
+function getSiteConfig() {
+  return JSON.parse(localStorage.getItem('portfolio_site_config') || '{}');
+}
+function saveSiteConfig(cfg) {
+  localStorage.setItem('portfolio_site_config', JSON.stringify(cfg));
+}
+
+// ===== AJUSTES =====
+function loadAjustes() {
+  const cfg = getSiteConfig();
+  document.getElementById('aTitle').value     = cfg.title     || '';
+  document.getElementById('aGithub').value    = cfg.github    || '';
+  document.getElementById('aLinkedin').value  = cfg.linkedin  || '';
+  document.getElementById('aEmail').value     = cfg.email     || '';
+  document.getElementById('aFormspree').value = cfg.formspree || '';
+}
+
+document.getElementById('ajustesForm').addEventListener('submit', e => {
+  e.preventDefault();
+  saveSiteConfig({
+    title:     document.getElementById('aTitle').value.trim(),
+    github:    document.getElementById('aGithub').value.trim(),
+    linkedin:  document.getElementById('aLinkedin').value.trim(),
+    email:     document.getElementById('aEmail').value.trim(),
+    formspree: document.getElementById('aFormspree').value.trim(),
+  });
+  showToast('Ajustes guardados');
+});
 
 // ===== RENDER LISTA =====
 function renderProyectos() {
@@ -139,6 +199,7 @@ function resetForm() {
   document.querySelectorAll('.color-opt').forEach((o, i) => o.classList.toggle('active', i === 0));
   closeGhDropdown();
   setGhLinked(null);
+  clearImagePreview();
 
   // cargar config guardada
   const cfg = getGhConfig();
@@ -161,8 +222,17 @@ function editarProyecto(index) {
   document.querySelectorAll('.color-opt').forEach(o => {
     o.classList.toggle('active', o.dataset.color === p.color);
   });
+  if (p.imagen) setImagePreview(p.imagen);
+  else clearImagePreview();
   if (p.githubRepo) setGhLinked(p.githubRepo);
-  showView('nuevo');
+  else setGhLinked(null);
+
+  // Mostrar vista sin llamar resetForm
+  Object.values(views).forEach(v => v.style.display = 'none');
+  views.nuevo.style.display = 'block';
+  document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
+    a.classList.toggle('active', a.dataset.view === 'nuevo');
+  });
 }
 
 function eliminarProyecto(index) {
@@ -173,6 +243,75 @@ function eliminarProyecto(index) {
   renderProyectos();
   showToast('Proyecto eliminado');
 }
+
+// ===== IMAGEN UPLOAD =====
+const imgUploadArea = document.getElementById('imgUploadArea');
+const imgInput      = document.getElementById('pImagen');
+const imgPreview    = document.getElementById('imgPreview');
+const imgPlaceholder= document.getElementById('imgPlaceholder');
+const imgRemoveBtn  = document.getElementById('imgRemoveBtn');
+let currentImagen   = null; // base64 de la imagen actual
+
+function setImagePreview(base64) {
+  currentImagen = base64;
+  imgPreview.src = base64;
+  imgPreview.style.display = 'block';
+  imgPlaceholder.style.display = 'none';
+  imgRemoveBtn.style.display = 'inline-flex';
+}
+
+function clearImagePreview() {
+  currentImagen = null;
+  imgPreview.src = '';
+  imgPreview.style.display = 'none';
+  imgPlaceholder.style.display = 'flex';
+  imgRemoveBtn.style.display = 'none';
+  imgInput.value = '';
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Click en el área abre el selector de archivos
+imgUploadArea.addEventListener('click', e => {
+  if (e.target === imgRemoveBtn || imgRemoveBtn.contains(e.target)) return;
+  imgInput.click();
+});
+
+imgInput.addEventListener('change', async () => {
+  const file = imgInput.files[0];
+  if (!file) return;
+  const base64 = await readFileAsBase64(file);
+  setImagePreview(base64);
+});
+
+imgRemoveBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  clearImagePreview();
+});
+
+// Drag & drop
+imgUploadArea.addEventListener('dragover', e => {
+  e.preventDefault();
+  imgUploadArea.classList.add('drag-over');
+});
+imgUploadArea.addEventListener('dragleave', () => {
+  imgUploadArea.classList.remove('drag-over');
+});
+imgUploadArea.addEventListener('drop', async e => {
+  e.preventDefault();
+  imgUploadArea.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  const base64 = await readFileAsBase64(file);
+  setImagePreview(base64);
+});
 
 // Color picker
 document.querySelectorAll('.color-opt').forEach(opt => {
@@ -196,6 +335,7 @@ proyectoForm.addEventListener('submit', e => {
     url:         document.getElementById('pUrl').value.trim(),
     githubUrl:   document.getElementById('pGithubUrl').value.trim(),
     color:       document.getElementById('pColor').value,
+    imagen:      currentImagen || null,
     id:          Date.now(),
     githubRepo:  currentLinkedRepo || null,
   };
@@ -222,6 +362,9 @@ document.getElementById('ghSettingsToggle').addEventListener('click', () => {
 document.getElementById('btnSaveGhConfig').addEventListener('click', () => {
   const user  = document.getElementById('ghUser').value.trim();
   const token = document.getElementById('ghToken').value.trim();
+  // AVISO: el token se guarda en localStorage (texto plano).
+  // Úsalo solo en tu máquina local o en redes de confianza.
+  // Para producción, usa un proxy backend o un token con permisos mínimos (solo lectura pública).
   saveGhConfig({ user, token });
   document.getElementById('ghSettingsBody').style.display = 'none';
   showToast('Configuración guardada');
