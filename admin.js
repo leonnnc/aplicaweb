@@ -1,3 +1,14 @@
+// ===== HELPER SANITIZAR HTML =====
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ===== CONFIGURACIÓN =====
 const PASSWORD   = 'admin123';
 const STORAGE_KEY = 'portfolio_proyectos';
@@ -115,7 +126,18 @@ function getProyectos() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 }
 function saveProyectos(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    return true;
+  } catch (err) {
+    if (err.name === 'QuotaExceededError' || err.code === 22) {
+      showToast('⚠️ Error: Almacenamiento lleno. Intenta usar imágenes más pequeñas.');
+    } else {
+      showToast('⚠️ Error al guardar proyectos.');
+    }
+    console.error('Storage error:', err);
+    return false;
+  }
 }
 function getGhConfig() {
   return JSON.parse(localStorage.getItem(GH_CONFIG_KEY) || '{}');
@@ -166,11 +188,11 @@ function renderProyectos() {
     <div class="proyecto-row">
       <div class="proyecto-color" style="background:${p.color}"></div>
       <div>
-        <div class="proyecto-nombre">${p.nombre}</div>
-        <div class="proyecto-cat">${p.categoria}</div>
+        <div class="proyecto-nombre">${escapeHtml(p.nombre)}</div>
+        <div class="proyecto-cat">${escapeHtml(p.categoria)}</div>
       </div>
       <div class="proyecto-estado ${p.estado === 'Completado' ? 'estado-completado' : 'estado-progreso'}">
-        ${p.estado}
+        ${escapeHtml(p.estado)}
       </div>
       <div class="proyecto-actions">
         <button class="btn-edit" data-index="${i}">Editar</button>
@@ -271,8 +293,48 @@ function clearImagePreview() {
 
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
+    // Si no es una imagen, leer como DataURL estándar
+    if (!file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload  = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // Compresión con Canvas para optimizar almacenamiento
     const reader = new FileReader();
-    reader.onload  = e => resolve(e.target.result);
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const maxWidth = 1000;
+        const maxHeight = 1000;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Exportar a WebP/JPEG optimizado
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        resolve(compressedBase64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -487,10 +549,10 @@ function renderDropdownRepos(repos) {
   ghDropdownList.innerHTML = repos.map((r, i) => `
     <div class="gh-repo-item" data-index="${i}">
       <div>
-        <div class="gh-repo-item-name">${r.name}</div>
-        <div class="gh-repo-item-desc">${r.description || 'Sin descripción'}</div>
+        <div class="gh-repo-item-name">${escapeHtml(r.name)}</div>
+        <div class="gh-repo-item-desc">${escapeHtml(r.description || 'Sin descripción')}</div>
       </div>
-      <div class="gh-repo-item-lang">${r.language || '—'}</div>
+      <div class="gh-repo-item-lang">${escapeHtml(r.language || '—')}</div>
       <div class="gh-repo-item-stars">★ ${r.stargazers_count}</div>
     </div>
   `).join('');

@@ -28,29 +28,42 @@ const server = http.createServer((req, res) => {
   }
 
   const requestedPath = rawUrl === '/' ? 'index.html' : decodedUrl.replace(/^\/+/, '');
-  const filePath = path.join(BASE_DIR, requestedPath);
+  let filePath = path.join(BASE_DIR, requestedPath);
 
   // Protección path traversal: el archivo debe estar dentro de BASE_DIR
   if (!filePath.startsWith(BASE_DIR + path.sep) && filePath !== BASE_DIR) {
-    res.writeHead(403);
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Acceso denegado');
     return;
   }
 
-  const ext = path.extname(filePath);
-  const contentType = mimeTypes[ext] || 'text/plain';
-
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
+  fs.stat(filePath, (statErr, stats) => {
+    if (statErr) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Archivo no encontrado');
       return;
     }
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': 'no-store',
+
+    // Si es un directorio, servir index.html si existe dentro del mismo
+    if (stats.isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
+    }
+
+    const ext = path.extname(filePath);
+    const contentType = mimeTypes[ext] || 'text/plain';
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('Archivo no encontrado');
+        return;
+      }
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-store',
+      });
+      res.end(data);
     });
-    res.end(data);
   });
 });
 

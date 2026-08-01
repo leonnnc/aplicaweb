@@ -1,3 +1,14 @@
+// ===== HELPER SANITIZAR HTML =====
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ===== STORAGE KEY (debe coincidir con admin.js) =====
 const STORAGE_KEY     = 'portfolio_proyectos';
 const SITE_CONFIG_KEY = 'portfolio_site_config';
@@ -68,10 +79,12 @@ function renderTrabajosPortfolio() {
 
   container.innerHTML = proyectos.map((p, i) => {
     const esInverso = i % 2 !== 0 ? 'inverso' : '';
-    const tags      = p.tags.map(t => `<span>${t}</span>`).join('');
+    const pNombre   = escapeHtml(p.nombre);
+    const pDesc     = escapeHtml(p.descripcion);
+    const tags      = Array.isArray(p.tags) ? p.tags.map(t => `<span>${escapeHtml(t)}</span>`).join('') : '';
     const num       = String(i + 1).padStart(2, '0');
-    const urlWeb    = p.url || '';
-    const urlGh     = p.githubUrl || p.url || '';
+    const urlWeb    = p.url ? escapeHtml(p.url) : '';
+    const urlGh     = (p.githubUrl || p.url) ? escapeHtml(p.githubUrl || p.url) : '';
 
     // Botón "Ver proyecto" → solo si hay URL de la web
     const btnWeb = urlWeb
@@ -90,7 +103,7 @@ function renderTrabajosPortfolio() {
 
     // Imagen subida por el usuario, o gradiente + icono de fallback
     const imgContent = p.imagen
-      ? `<img class="trabajo-screenshot" src="${p.imagen}" alt="Preview de ${p.nombre}" loading="lazy" />`
+      ? `<img class="trabajo-screenshot" src="${escapeHtml(p.imagen)}" alt="Preview de ${pNombre}" loading="lazy" />`
       : `<svg class="trabajo-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
            <rect x="3" y="3" width="18" height="18" rx="2"/>
            <path d="M3 9h18"/>
@@ -105,8 +118,8 @@ function renderTrabajosPortfolio() {
         </div>
         <div class="trabajo-info">
           <span class="trabajo-num">${num}</span>
-          <h2>${p.nombre}</h2>
-          <p>${p.descripcion}</p>
+          <h2>${pNombre}</h2>
+          <p>${pDesc}</p>
           <div class="trabajo-tags">${tags}</div>
           <div class="trabajo-btns">
             ${btnWeb}
@@ -146,20 +159,37 @@ const dotsWrap = document.getElementById('carouselDots');
 const prev     = document.getElementById('prevBtn');
 const next     = document.getElementById('nextBtn');
 let current = 0;
-let timer;
+let timer = null;
 let totalSlides = 0;
 
 function buildCarousel() {
   const proyectos = getProyectos();
   totalSlides = proyectos.length;
 
+  if (totalSlides === 0) {
+    track.innerHTML = `
+      <div class="slide slide-proyecto">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <h1>Sin <span>proyectos</span></h1>
+          <p>Agrega proyectos desde el panel de administración.</p>
+        </div>
+      </div>
+    `;
+    dotsWrap.innerHTML = '';
+    return;
+  }
+
   // Generar slides con imagen o gradiente
   track.innerHTML = proyectos.map(p => {
+    const pNombre = escapeHtml(p.nombre);
+    const pDesc   = escapeHtml(p.descripcion);
+
     const bg = p.imagen
-      ? `background: ${p.color} url('${p.imagen}') center/cover no-repeat`
+      ? `background: ${p.color} url('${escapeHtml(p.imagen)}') center/cover no-repeat`
       : `background: ${p.color}`;
 
-    const palabras = p.nombre.split(' ');
+    const palabras = pNombre.split(' ');
     const mitad    = Math.ceil(palabras.length / 2);
     const titulo1  = palabras.slice(0, mitad).join(' ');
     const titulo2  = palabras.slice(mitad).join(' ');
@@ -169,7 +199,7 @@ function buildCarousel() {
         <div class="slide-overlay"></div>
         <div class="slide-content">
           <h1>${titulo1} <span>${titulo2}</span></h1>
-          <p>${p.descripcion.slice(0, 80)}${p.descripcion.length > 80 ? '…' : ''}</p>
+          <p>${pDesc.slice(0, 80)}${pDesc.length > 80 ? '…' : ''}</p>
           <a href="#trabajos" class="link-arrow">Ver proyectos ↓</a>
         </div>
       </div>
@@ -189,13 +219,32 @@ function buildCarousel() {
 function getDots() { return dotsWrap.querySelectorAll('.dot'); }
 
 function goTo(i) {
+  if (totalSlides <= 0) return;
   current = (i + totalSlides) % totalSlides;
   track.style.transform = `translateX(-${current * 100}%)`;
   getDots().forEach(d => d.classList.toggle('active', +d.dataset.index === current));
 }
 
-function autoTimer() { timer = setInterval(() => goTo(current + 1), 4000); }
-function resetTimer() { clearInterval(timer); autoTimer(); }
+function autoTimer() {
+  clearInterval(timer);
+  if (totalSlides <= 1) return;
+  timer = setInterval(() => goTo(current + 1), 4000);
+}
+function resetTimer() { autoTimer(); }
+
+next.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
+prev.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
+
+// Swipe móvil
+let tx = 0;
+track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+track.addEventListener('touchend', e => {
+  const d = tx - e.changedTouches[0].clientX;
+  if (Math.abs(d) > 40) { d > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
+});
+
+buildCarousel();
+autoTimer();
 
 next.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
 prev.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
