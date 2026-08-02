@@ -9,10 +9,21 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// ===== CONFIGURACIÓN =====
-const PASSWORD   = 'admin123';
-const STORAGE_KEY = 'portfolio_proyectos';
+// ===== CONFIGURACIÓN Y ESTADO =====
 const GH_CONFIG_KEY = 'portfolio_gh_config';
+let proyectosCache = [];
+
+function getToken() {
+  return sessionStorage.getItem('admin_token') || '';
+}
+
+function setToken(token) {
+  sessionStorage.setItem('admin_token', token);
+}
+
+function clearToken() {
+  sessionStorage.removeItem('admin_token');
+}
 
 // ===== MAPAS GITHUB =====
 const LANG_COLORS = {
@@ -40,32 +51,55 @@ const loginForm   = document.getElementById('loginForm');
 const loginPass   = document.getElementById('loginPass');
 const loginError  = document.getElementById('loginError');
 
-if (sessionStorage.getItem('admin_auth') === 'true') {
+if (getToken()) {
   loginScreen.style.display = 'none';
   panel.style.display = 'grid';
-  renderProyectos();
+  loadProyectosAPI();
 }
 
-loginForm.addEventListener('submit', e => {
+loginForm.addEventListener('submit', async e => {
   e.preventDefault();
-  if (loginPass.value === PASSWORD) {
-    sessionStorage.setItem('admin_auth', 'true');
-    loginScreen.style.display = 'none';
-    panel.style.display = 'grid';
-    loginError.classList.remove('show');
-    renderProyectos();
-  } else {
+  const password = loginPass.value.trim();
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success && data.token) {
+      setToken(data.token);
+      loginScreen.style.display = 'none';
+      panel.style.display = 'grid';
+      loginError.classList.remove('show');
+      loadProyectosAPI();
+    } else {
+      loginError.textContent = data.error || 'Contraseña incorrecta';
+      loginError.classList.add('show');
+      loginPass.value = '';
+      loginPass.focus();
+    }
+  } catch (err) {
+    loginError.textContent = 'Error de conexión con el servidor';
     loginError.classList.add('show');
-    loginPass.value = '';
-    loginPass.focus();
   }
 });
 
 document.getElementById('logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('admin_auth');
+  clearToken();
   panel.style.display = 'none';
   loginScreen.style.display = 'flex';
   loginPass.value = '';
+});
+
+// ===== PROTECCIÓN DE INTERFAZ DE ADMINISTRACIÓN =====
+// Bloquear menú contextual de clic derecho en la interfaz para mayor seguridad
+document.addEventListener('contextmenu', e => {
+  if (getToken()) {
+    e.preventDefault();
+  }
 });
 
 // ===== HAMBURGUESA MOBILE =====
@@ -91,7 +125,6 @@ hamburgerBtn.addEventListener('click', () => {
 
 sidebarOverlay.addEventListener('click', closeSidebar);
 
-// Cerrar sidebar al navegar (mobile)
 document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
   a.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
 });
@@ -109,82 +142,133 @@ function showView(name) {
   document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
     a.classList.toggle('active', a.dataset.view === name);
   });
-  if (name === 'proyectos') renderProyectos();
+  if (name === 'proyectos') loadProyectosAPI();
   if (name === 'nuevo')     resetForm();
-  if (name === 'ajustes')   loadAjustes();
+  if (name === 'ajustes')   loadAjustesAPI();
 }
 
 document.addEventListener('click', e => {
   const btn = e.target.closest('[data-view]');
-  // Ignorar si el click viene de btn-edit o btn-delete (tienen su propio handler)
   if (!btn || btn.classList.contains('btn-edit') || btn.classList.contains('btn-delete')) return;
   showView(btn.dataset.view);
 });
 
-// ===== STORAGE =====
-function getProyectos() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-}
-function saveProyectos(list) {
+// ===== API SERVER PERSISTENCE =====
+async function loadProyectosAPI() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return true;
-  } catch (err) {
-    if (err.name === 'QuotaExceededError' || err.code === 22) {
-      showToast('⚠️ Error: Almacenamiento lleno. Intenta usar imágenes más pequeñas.');
-    } else {
-      showToast('⚠️ Error al guardar proyectos.');
+    const res = await fetch('/api/proyectos');
+    if (res.ok) {
+      proyectosCache = await res.json();
+      renderProyectos();
     }
-    console.error('Storage error:', err);
+  } catch (err) {
+    showToast('Error al cargar proyectos del servidor');
+  }
+}
+
+async function saveProyectosAPI(list) {
+  const token = getToken();
+  if (!token) {
+    showToast('Sesión expirada, vuelve a iniciar sesión');
+    return false;
+  }
+
+  try {
+    const res = await fetch('/api/proyectos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(list),
+    });
+
+    if (res.status === 401) {
+      showToast('Sesión no autorizada');
+      clearToken();
+      location.reload();
+      return false;
+    }
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      proyectosCache = list;
+      return true;
+    } else {
+      showToast(data.error || 'Error al guardar en servidor');
+      return false;
+    }
+  } catch (err) {
+    showToast('Error de conexión al guardar');
     return false;
   }
 }
+
 function getGhConfig() {
   return JSON.parse(localStorage.getItem(GH_CONFIG_KEY) || '{}');
 }
 function saveGhConfig(cfg) {
   localStorage.setItem(GH_CONFIG_KEY, JSON.stringify(cfg));
 }
-function getSiteConfig() {
-  return JSON.parse(localStorage.getItem('portfolio_site_config') || '{}');
-}
-function saveSiteConfig(cfg) {
-  localStorage.setItem('portfolio_site_config', JSON.stringify(cfg));
-}
 
 // ===== AJUSTES =====
-function loadAjustes() {
-  const cfg = getSiteConfig();
-  document.getElementById('aTitle').value     = cfg.title     || '';
-  document.getElementById('aGithub').value    = cfg.github    || '';
-  document.getElementById('aLinkedin').value  = cfg.linkedin  || '';
-  document.getElementById('aEmail').value     = cfg.email     || '';
-  document.getElementById('aFormspree').value = cfg.formspree || '';
+async function loadAjustesAPI() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const cfg = await res.json();
+      document.getElementById('aTitle').value     = cfg.title     || '';
+      document.getElementById('aGithub').value    = cfg.github    || '';
+      document.getElementById('aLinkedin').value  = cfg.linkedin  || '';
+      document.getElementById('aEmail').value     = cfg.email     || '';
+      document.getElementById('aFormspree').value = cfg.formspree || '';
+    }
+  } catch (err) {
+    showToast('Error al cargar ajustes');
+  }
 }
 
-document.getElementById('ajustesForm').addEventListener('submit', e => {
+document.getElementById('ajustesForm').addEventListener('submit', async e => {
   e.preventDefault();
-  saveSiteConfig({
+  const token = getToken();
+  const newConfig = {
     title:     document.getElementById('aTitle').value.trim(),
     github:    document.getElementById('aGithub').value.trim(),
     linkedin:  document.getElementById('aLinkedin').value.trim(),
     email:     document.getElementById('aEmail').value.trim(),
     formspree: document.getElementById('aFormspree').value.trim(),
-  });
-  showToast('Ajustes guardados');
+  };
+
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(newConfig),
+    });
+
+    if (res.ok) {
+      showToast('Ajustes guardados en el servidor');
+    } else {
+      showToast('Error al guardar ajustes');
+    }
+  } catch (err) {
+    showToast('Error de conexión');
+  }
 });
 
 // ===== RENDER LISTA =====
 function renderProyectos() {
   const lista = document.getElementById('proyectosLista');
-  const proyectos = getProyectos();
 
-  if (proyectos.length === 0) {
+  if (!proyectosCache || proyectosCache.length === 0) {
     lista.innerHTML = '<p class="empty-state">No hay proyectos todavía. Agrega el primero.</p>';
     return;
   }
 
-  lista.innerHTML = proyectos.map((p, i) => `
+  lista.innerHTML = proyectosCache.map((p, i) => `
     <div class="proyecto-row">
       <div class="proyecto-color" style="background:${p.color}"></div>
       <div>
@@ -223,21 +307,20 @@ function resetForm() {
   setGhLinked(null);
   clearImagePreview();
 
-  // cargar config guardada
   const cfg = getGhConfig();
   if (cfg.user)  document.getElementById('ghUser').value  = cfg.user;
   if (cfg.token) document.getElementById('ghToken').value = cfg.token;
 }
 
 function editarProyecto(index) {
-  const p = getProyectos()[index];
+  const p = proyectosCache[index];
   formTitle.textContent = 'Editar Proyecto';
   document.getElementById('proyectoId').value  = index;
   document.getElementById('pNombre').value     = p.nombre;
   document.getElementById('pDesc').value       = p.descripcion;
   document.getElementById('pCategoria').value  = p.categoria;
   document.getElementById('pEstado').value     = p.estado;
-  document.getElementById('pTags').value       = p.tags.join(', ');
+  document.getElementById('pTags').value       = Array.isArray(p.tags) ? p.tags.join(', ') : '';
   document.getElementById('pUrl').value        = p.url || '';
   document.getElementById('pGithubUrl').value  = p.githubUrl || '';
   document.getElementById('pColor').value      = p.color;
@@ -249,7 +332,6 @@ function editarProyecto(index) {
   if (p.githubRepo) setGhLinked(p.githubRepo);
   else setGhLinked(null);
 
-  // Mostrar vista sin llamar resetForm
   Object.values(views).forEach(v => v.style.display = 'none');
   views.nuevo.style.display = 'block';
   document.querySelectorAll('.sidebar-nav a[data-view]').forEach(a => {
@@ -257,13 +339,15 @@ function editarProyecto(index) {
   });
 }
 
-function eliminarProyecto(index) {
+async function eliminarProyecto(index) {
   if (!confirm('¿Eliminar este proyecto?')) return;
-  const list = getProyectos();
+  const list = [...proyectosCache];
   list.splice(index, 1);
-  saveProyectos(list);
-  renderProyectos();
-  showToast('Proyecto eliminado');
+  const success = await saveProyectosAPI(list);
+  if (success) {
+    renderProyectos();
+    showToast('Proyecto eliminado');
+  }
 }
 
 // ===== IMAGEN UPLOAD =====
@@ -272,7 +356,7 @@ const imgInput      = document.getElementById('pImagen');
 const imgPreview    = document.getElementById('imgPreview');
 const imgPlaceholder= document.getElementById('imgPlaceholder');
 const imgRemoveBtn  = document.getElementById('imgRemoveBtn');
-let currentImagen   = null; // base64 de la imagen actual
+let currentImagen   = null;
 
 function setImagePreview(base64) {
   currentImagen = base64;
@@ -293,7 +377,6 @@ function clearImagePreview() {
 
 function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
-    // Si no es una imagen, leer como DataURL estándar
     if (!file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload  = e => resolve(e.target.result);
@@ -302,7 +385,6 @@ function readFileAsBase64(file) {
       return;
     }
 
-    // Compresión con Canvas para optimizar almacenamiento
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
@@ -328,7 +410,6 @@ function readFileAsBase64(file) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Exportar a WebP/JPEG optimizado
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
         resolve(compressedBase64);
       };
@@ -340,7 +421,6 @@ function readFileAsBase64(file) {
   });
 }
 
-// Click en el área abre el selector de archivos
 imgUploadArea.addEventListener('click', e => {
   if (e.target === imgRemoveBtn || imgRemoveBtn.contains(e.target)) return;
   imgInput.click();
@@ -358,7 +438,6 @@ imgRemoveBtn.addEventListener('click', e => {
   clearImagePreview();
 });
 
-// Drag & drop
 imgUploadArea.addEventListener('dragover', e => {
   e.preventDefault();
   imgUploadArea.classList.add('drag-over');
@@ -375,7 +454,6 @@ imgUploadArea.addEventListener('drop', async e => {
   setImagePreview(base64);
 });
 
-// Color picker
 document.querySelectorAll('.color-opt').forEach(opt => {
   opt.addEventListener('click', () => {
     document.querySelectorAll('.color-opt').forEach(o => o.classList.remove('active'));
@@ -384,8 +462,7 @@ document.querySelectorAll('.color-opt').forEach(opt => {
   });
 });
 
-// Submit
-proyectoForm.addEventListener('submit', e => {
+proyectoForm.addEventListener('submit', async e => {
   e.preventDefault();
   const id = document.getElementById('proyectoId').value;
   const nuevo = {
@@ -402,17 +479,18 @@ proyectoForm.addEventListener('submit', e => {
     githubRepo:  currentLinkedRepo || null,
   };
 
-  const list = getProyectos();
+  const list = [...proyectosCache];
   if (id !== '') {
     list[+id] = { ...list[+id], ...nuevo };
-    showToast('Proyecto actualizado');
   } else {
     list.push(nuevo);
-    showToast('Proyecto guardado');
   }
 
-  saveProyectos(list);
-  showView('proyectos');
+  const success = await saveProyectosAPI(list);
+  if (success) {
+    showToast(id !== '' ? 'Proyecto actualizado' : 'Proyecto guardado');
+    showView('proyectos');
+  }
 });
 
 // ===== GITHUB CONFIG COLAPSABLE =====
@@ -424,13 +502,9 @@ document.getElementById('ghSettingsToggle').addEventListener('click', () => {
 document.getElementById('btnSaveGhConfig').addEventListener('click', () => {
   const user  = document.getElementById('ghUser').value.trim();
   const token = document.getElementById('ghToken').value.trim();
-  // AVISO: el token se guarda en localStorage (texto plano).
-  // Úsalo solo en tu máquina local o en redes de confianza.
-  // Para producción, usa un proxy backend o un token con permisos mínimos (solo lectura pública).
   saveGhConfig({ user, token });
   document.getElementById('ghSettingsBody').style.display = 'none';
   showToast('Configuración guardada');
-  // precarga repos si hay usuario
   if (user) loadGhRepos(user, token);
 });
 
@@ -449,14 +523,12 @@ btnGhSearch.addEventListener('click', async () => {
   const user = cfg.user || document.getElementById('ghUser').value.trim();
 
   if (!user) {
-    // Abrir config si no hay usuario guardado
     document.getElementById('ghSettingsBody').style.display = 'flex';
     document.getElementById('ghUser').focus();
     showToast('Primero configura tu usuario de GitHub ⚙');
     return;
   }
 
-  // Si el dropdown ya está abierto con datos, solo mostrarlo
   if (ghReposCache.length > 0) {
     ghDropdown.style.display = 'flex';
     ghDropdownSearch.value = '';
@@ -475,46 +547,29 @@ async function loadGhRepos(user, token) {
   ghDropdown.style.display = 'flex';
   btnGhSearch.classList.add('loading');
 
-  // Primero verificar que el usuario existe
   const headers = { 'Accept': 'application/vnd.github+json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    // Paso 1: verificar usuario
     const userRes = await fetch(
       `https://api.github.com/users/${encodeURIComponent(user)}`,
       { headers }
     );
 
-    if (userRes.status === 404) {
-      throw new Error(`Usuario "${user}" no encontrado en GitHub. Verifica el nombre exacto.`);
-    }
-    if (userRes.status === 401) {
-      throw new Error('Token inválido. Revisa tu token personal de GitHub.');
-    }
-    if (userRes.status === 403) {
-      const remaining = userRes.headers.get('X-RateLimit-Remaining');
-      if (remaining === '0') {
-        throw new Error('Límite de la API alcanzado. Agrega un token personal en ⚙ Configuración.');
-      }
-      throw new Error('Acceso denegado (403). Agrega un token personal.');
-    }
-    if (!userRes.ok) {
-      throw new Error(`Error al verificar usuario: ${userRes.status}`);
-    }
+    if (userRes.status === 404) throw new Error(`Usuario "${user}" no encontrado en GitHub.`);
+    if (userRes.status === 401) throw new Error('Token inválido. Revisa tu token personal.');
+    if (userRes.status === 403) throw new Error('Límite de API alcanzado o acceso denegado.');
+    if (!userRes.ok) throw new Error(`Error al verificar usuario: ${userRes.status}`);
 
-    // Paso 2: traer repos
     const reposRes = await fetch(
       `https://api.github.com/users/${encodeURIComponent(user)}/repos?per_page=100&sort=updated&type=owner`,
       { headers }
     );
 
-    if (!reposRes.ok) {
-      throw new Error(`Error al obtener repositorios: ${reposRes.status}`);
-    }
+    if (!reposRes.ok) throw new Error(`Error al obtener repositorios: ${reposRes.status}`);
 
     const repos = await reposRes.json();
-    ghReposCache = repos; // incluir forks también por si acaso
+    ghReposCache = repos;
 
     if (ghReposCache.length === 0) {
       ghDropdownStatus.className = '';
@@ -528,13 +583,7 @@ async function loadGhRepos(user, token) {
 
   } catch (err) {
     ghDropdownStatus.className = 'error';
-    // Distinguir errores de red de errores de la API
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
-      ghDropdownStatus.textContent = 'Sin conexión a internet. Verifica tu red.';
-    } else {
-      ghDropdownStatus.textContent = err.message;
-    }
-    console.error('GitHub API error:', err);
+    ghDropdownStatus.textContent = err.message || 'Error de conexión';
   } finally {
     btnGhSearch.classList.remove('loading');
   }
@@ -566,7 +615,6 @@ function renderDropdownRepos(repos) {
   });
 }
 
-// Filtro de búsqueda en dropdown
 ghDropdownSearch.addEventListener('input', () => {
   const q = ghDropdownSearch.value.toLowerCase();
   const filtered = ghReposCache.filter(r =>
@@ -576,7 +624,6 @@ ghDropdownSearch.addEventListener('input', () => {
   renderDropdownRepos(filtered);
 });
 
-// Cerrar dropdown al hacer clic fuera
 document.addEventListener('click', e => {
   if (!e.target.closest('#ghDropdown') && !e.target.closest('#btnGhSearch')) {
     closeGhDropdown();
@@ -587,7 +634,6 @@ function closeGhDropdown() {
   ghDropdown.style.display = 'none';
 }
 
-// ===== RELLENAR FORMULARIO DESDE REPO =====
 function fillFormFromRepo(repo) {
   const lang  = repo.language || '';
   const tags  = [lang, ...(repo.topics || [])].filter(Boolean).slice(0, 5);
@@ -599,18 +645,16 @@ function fillFormFromRepo(repo) {
   document.getElementById('pCategoria').value = cat;
   document.getElementById('pEstado').value    = repo.archived ? 'Completado' : 'En Progreso';
   document.getElementById('pTags').value      = tags.join(', ');
-  document.getElementById('pUrl').value       = repo.homepage || ''; // URL de la web del proyecto
-  document.getElementById('pGithubUrl').value = repo.html_url;       // URL del repo GitHub
+  document.getElementById('pUrl').value       = repo.homepage || '';
+  document.getElementById('pGithubUrl').value = repo.html_url;
   document.getElementById('pColor').value     = color;
 
-  // seleccionar color visualmente si coincide
   let matched = false;
   document.querySelectorAll('.color-opt').forEach(o => {
     const match = o.dataset.color === color;
     o.classList.toggle('active', match);
     if (match) matched = true;
   });
-  // si el color no está en los swatches, marcar el primero como fallback
   if (!matched) {
     document.querySelectorAll('.color-opt')[0].classList.add('active');
   }
@@ -619,7 +663,6 @@ function fillFormFromRepo(repo) {
   showToast(`Datos de "${repo.name}" cargados`);
 }
 
-// ===== BADGE REPO VINCULADO =====
 function setGhLinked(repoName) {
   const el = document.getElementById('ghLinked');
   currentLinkedRepo = repoName;

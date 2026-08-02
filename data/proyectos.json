@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "nombre": "Proyecto Web",
+    "descripcion": "Aplicación web moderna construida con React y Node.js. Autenticación, dashboard y API REST completa.",
+    "categoria": "web",
+    "estado": "En Progreso",
+    "tags": ["React", "Node.js", "MongoDB"],
+    "color": "linear-gradient(145deg,#1a1a2e,#4a3f6b)",
+    "url": "#"
+  },
+  {
+    "id": 2,
+    "nombre": "Diseño UI/UX",
+    "descripcion": "Diseño de interfaz para aplicación móvil. Flujo completo desde wireframe hasta prototipo interactivo.",
+    "categoria": "diseño",
+    "estado": "Completado",
+    "tags": ["Figma", "UI/UX", "Prototipo"],
+    "color": "linear-gradient(145deg,#1c1c1c,#3a2a2a)",
+    "url": "#"
+  },
+  {
+    "id": 3,
+    "nombre": "App Mobile",
+    "descripcion": "Aplicación de gestión de tareas para Android e iOS con sincronización en tiempo real.",
+    "categoria": "app",
+    "estado": "En Progreso",
+    "tags": ["Flutter", "Dart", "Firebase"],
+    "color": "linear-gradient(145deg,#0a1628,#1a3a4a)",
+    "url": "#"
+  },
+  {
+    "id": 4,
+    "nombre": "E-commerce",
+    "descripcion": "Tienda online completa con carrito de compras, pasarela de pagos y panel de administración.",
+    "categoria": "web",
+    "estado": "En Progreso",
+    "tags": ["HTML", "CSS", "JavaScript"],
+    "color": "linear-gradient(145deg,#1a1a0a,#2a3a1a)",
+    "url": "#"
+  }
+]

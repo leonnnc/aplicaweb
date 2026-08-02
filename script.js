@@ -9,73 +9,45 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-// ===== STORAGE KEY (debe coincidir con admin.js) =====
-const STORAGE_KEY     = 'portfolio_proyectos';
-const SITE_CONFIG_KEY = 'portfolio_site_config';
+// Globales
+let currentProyectos = [];
+let currentSiteConfig = {};
 
-function getSiteConfig() {
-  return JSON.parse(localStorage.getItem(SITE_CONFIG_KEY) || '{}');
+// ===== OBTENER DATOS DEL SERVIDOR API =====
+async function fetchProyectos() {
+  try {
+    const res = await fetch('/api/proyectos');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (err) {
+    console.warn('Servidor offline o sin proyectos, usando localStorage/fallback');
+  }
+  const stored = localStorage.getItem('portfolio_proyectos');
+  return stored ? JSON.parse(stored) : [];
 }
 
-// ===== PROYECTOS POR DEFECTO (se usan si no hay nada en localStorage) =====
-const defaultProyectos = [
-  {
-    id: 1,
-    nombre: 'Proyecto Web',
-    descripcion: 'Aplicación web moderna construida con React y Node.js. Autenticación, dashboard y API REST completa.',
-    categoria: 'web',
-    estado: 'En Progreso',
-    tags: ['React', 'Node.js', 'MongoDB'],
-    color: 'linear-gradient(145deg,#1a1a2e,#4a3f6b)',
-    url: '#',
-  },
-  {
-    id: 2,
-    nombre: 'Diseño UI/UX',
-    descripcion: 'Diseño de interfaz para aplicación móvil. Flujo completo desde wireframe hasta prototipo interactivo.',
-    categoria: 'diseño',
-    estado: 'Completado',
-    tags: ['Figma', 'UI/UX', 'Prototipo'],
-    color: 'linear-gradient(145deg,#1c1c1c,#3a2a2a)',
-    url: '#',
-  },
-  {
-    id: 3,
-    nombre: 'App Mobile',
-    descripcion: 'Aplicación de gestión de tareas para Android e iOS con sincronización en tiempo real.',
-    categoria: 'app',
-    estado: 'En Progreso',
-    tags: ['Flutter', 'Dart', 'Firebase'],
-    color: 'linear-gradient(145deg,#0a1628,#1a3a4a)',
-    url: '#',
-  },
-  {
-    id: 4,
-    nombre: 'E-commerce',
-    descripcion: 'Tienda online completa con carrito de compras, pasarela de pagos y panel de administración.',
-    categoria: 'web',
-    estado: 'En Progreso',
-    tags: ['HTML', 'CSS', 'JavaScript'],
-    color: 'linear-gradient(145deg,#1a1a0a,#2a3a1a)',
-    url: '#',
-  },
-];
+async function fetchSiteConfig() {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Config offline');
+  }
+  const stored = localStorage.getItem('portfolio_site_config');
+  return stored ? JSON.parse(stored) : {};
+}
 
 // ===== RENDERIZAR PROYECTOS EN EL PORTFOLIO =====
-function getProyectos() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed.length > 0) return parsed;
-  }
-  return defaultProyectos;
-}
-
-function renderTrabajosPortfolio() {
+function renderTrabajosPortfolio(proyectos) {
   const container = document.getElementById('trabajosContainer');
   if (!container) return;
 
-  const proyectos = getProyectos();
+  if (!proyectos || proyectos.length === 0) {
+    container.innerHTML = '<p class="empty-state" style="padding:48px;text-align:center;color:var(--text-soft)">No hay proyectos creados aún.</p>';
+    return;
+  }
 
   container.innerHTML = proyectos.map((p, i) => {
     const esInverso = i % 2 !== 0 ? 'inverso' : '';
@@ -86,12 +58,10 @@ function renderTrabajosPortfolio() {
     const urlWeb    = p.url ? escapeHtml(p.url) : '';
     const urlGh     = (p.githubUrl || p.url) ? escapeHtml(p.githubUrl || p.url) : '';
 
-    // Botón "Ver proyecto" → solo si hay URL de la web
     const btnWeb = urlWeb
       ? `<a href="${urlWeb}" class="btn-outline" target="_blank" rel="noopener">Ver proyecto →</a>`
       : '';
 
-    // Botón GitHub → solo si hay URL de GitHub
     const btnGh = urlGh
       ? `<a href="${urlGh}" class="btn-outline btn-github" target="_blank" rel="noopener">
            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:5px"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
@@ -101,7 +71,6 @@ function renderTrabajosPortfolio() {
 
     const imgStyle = `background:${p.color}`;
 
-    // Imagen subida por el usuario, o gradiente + icono de fallback
     const imgContent = p.imagen
       ? `<img class="trabajo-screenshot" src="${escapeHtml(p.imagen)}" alt="Preview de ${pNombre}" loading="lazy" />`
       : `<svg class="trabajo-thumb-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
@@ -136,10 +105,7 @@ function renderTrabajosPortfolio() {
 // ===== ANIMACIÓN SCROLL =====
 function initScrollAnimation() {
   const trabajos = document.querySelectorAll('.trabajo');
-  trabajos.forEach(t => {
-    t.classList.remove('visible');
-    // resetear para que el observer los detecte de nuevo
-  });
+  trabajos.forEach(t => { t.classList.remove('visible'); });
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
@@ -162,9 +128,8 @@ let current = 0;
 let timer = null;
 let totalSlides = 0;
 
-function buildCarousel() {
-  const proyectos = getProyectos();
-  totalSlides = proyectos.length;
+function buildCarousel(proyectos) {
+  totalSlides = proyectos ? proyectos.length : 0;
 
   if (totalSlides === 0) {
     track.innerHTML = `
@@ -180,7 +145,6 @@ function buildCarousel() {
     return;
   }
 
-  // Generar slides con imagen o gradiente
   track.innerHTML = proyectos.map(p => {
     const pNombre = escapeHtml(p.nombre);
     const pDesc   = escapeHtml(p.descripcion);
@@ -206,7 +170,6 @@ function buildCarousel() {
     `;
   }).join('');
 
-  // Generar dots
   dotsWrap.innerHTML = proyectos.map((_, i) =>
     `<span class="dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`
   ).join('');
@@ -243,33 +206,15 @@ track.addEventListener('touchend', e => {
   if (Math.abs(d) > 40) { d > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
 });
 
-buildCarousel();
-autoTimer();
-
-next.addEventListener('click', () => { goTo(current + 1); resetTimer(); });
-prev.addEventListener('click', () => { goTo(current - 1); resetTimer(); });
-
-// Swipe móvil
-let tx = 0;
-track.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
-track.addEventListener('touchend', e => {
-  const d = tx - e.changedTouches[0].clientX;
-  if (Math.abs(d) > 40) { d > 0 ? goTo(current + 1) : goTo(current - 1); resetTimer(); }
-});
-
-buildCarousel();
-autoTimer();
-
 // ===== FORMULARIO CONTACTO =====
 document.getElementById('contactoForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
   const btn  = form.querySelector('button');
-  const cfg  = getSiteConfig();
+  const cfg  = currentSiteConfig || {};
   const formspreeId = cfg.formspree || '';
 
   if (!formspreeId) {
-    // Sin Formspree configurado: modo demo (sin envío real)
     btn.textContent = 'Enviado ✓';
     btn.style.background = 'var(--text)';
     btn.style.color = 'var(--bg)';
@@ -282,12 +227,10 @@ document.getElementById('contactoForm').addEventListener('submit', async e => {
     return;
   }
 
-  // Con Formspree: envío real
   btn.textContent = 'Enviando...';
   btn.disabled = true;
 
   const data = new FormData(form);
-  // Añadir el email de destino si está configurado
   if (cfg.email) data.set('_replyto', cfg.email);
 
   try {
@@ -342,28 +285,31 @@ window.addEventListener('scroll', () => {
   });
 });
 
-// ===== INIT =====
-renderTrabajosPortfolio();
+// ===== INICIALIZACIÓN ASÍNCRONA DESDE EL SERVIDOR =====
+async function initApp() {
+  currentProyectos = await fetchProyectos();
+  currentSiteConfig = await fetchSiteConfig();
 
-// Actualizar footer y título desde la config guardada
-(function applyConfig() {
-  const cfg = getSiteConfig();
+  renderTrabajosPortfolio(currentProyectos);
+  buildCarousel(currentProyectos);
+  autoTimer();
 
-  // Título de la página
-  if (cfg.title) {
-    document.title = cfg.title;
+  // Aplicar configuración visual
+  if (currentSiteConfig.title) {
+    document.title = currentSiteConfig.title;
     const logo = document.querySelector('.nav-logo');
-    if (logo) logo.textContent = cfg.title;
+    if (logo) logo.textContent = currentSiteConfig.title;
     const footerSpan = document.querySelector('.footer span');
-    if (footerSpan) footerSpan.textContent = cfg.title + ' ' + new Date().getFullYear();
+    if (footerSpan) footerSpan.textContent = currentSiteConfig.title + ' ' + new Date().getFullYear();
   }
 
-  // Links del footer
   const footerLinks = document.querySelectorAll('.footer-links a');
-  if (footerLinks.length >= 1 && cfg.github) {
-    footerLinks[0].href = cfg.github;
+  if (footerLinks.length >= 1 && currentSiteConfig.github) {
+    footerLinks[0].href = currentSiteConfig.github;
   }
-  if (footerLinks.length >= 2 && cfg.linkedin) {
-    footerLinks[1].href = cfg.linkedin;
+  if (footerLinks.length >= 2 && currentSiteConfig.linkedin) {
+    footerLinks[1].href = currentSiteConfig.linkedin;
   }
-})();
+}
+
+initApp();
