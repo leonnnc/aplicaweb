@@ -1,0 +1,17 @@
+{
+  "name": "aplicaweb",
+  "version": "0.10.0",
+  "description": "Portfolio web dinámico con API REST en Node.js y panel de administración",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "portfolio",
+    "nodejs",
+    "api-rest",
+    "vanilla-js"
+  ],
+  "author": "leonnnc",
+  "license": "MIT"
+}
