@@ -133,7 +133,7 @@ function buildCarousel(proyectos) {
 
   if (totalSlides === 0) {
     track.innerHTML = `
-      <div class="slide slide-proyecto">
+      <div class="slide slide-proyecto" style="background:#111">
         <div class="slide-overlay"></div>
         <div class="slide-content">
           <h1>Sin <span>proyectos</span></h1>
@@ -149,9 +149,11 @@ function buildCarousel(proyectos) {
     const pNombre = escapeHtml(p.nombre);
     const pDesc   = escapeHtml(p.descripcion);
 
-    const bg = p.imagen
-      ? `background: ${p.color} url('${escapeHtml(p.imagen)}') center/cover no-repeat`
-      : `background: ${p.color}`;
+    // Usar <img> real en lugar de CSS background-image
+    // Esto soporta base64 grandes que los navegadores no renderizan como CSS background
+    const bgImgTag = p.imagen
+      ? `<img class="slide-bg-img" src="${p.imagen}" alt="" aria-hidden="true" />`
+      : '';
 
     const palabras = pNombre.split(' ');
     const mitad    = Math.ceil(palabras.length / 2);
@@ -159,7 +161,8 @@ function buildCarousel(proyectos) {
     const titulo2  = palabras.slice(mitad).join(' ');
 
     return `
-      <div class="slide slide-proyecto" style="${bg}">
+      <div class="slide slide-proyecto" style="background:${p.color}">
+        ${bgImgTag}
         <div class="slide-overlay"></div>
         <div class="slide-content">
           <h1>${titulo1} <span>${titulo2}</span></h1>
