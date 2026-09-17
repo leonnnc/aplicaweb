@@ -5,7 +5,19 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 5720;
 const BASE_DIR = __dirname;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminWeb26';
+
+// La contraseña del panel se lee SIEMPRE del entorno: no hay ningún valor por
+// defecto en el código, para que el repositorio no contenga una clave utilizable.
+// Si no se define ADMIN_PASSWORD se genera una aleatoria en cada arranque.
+let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  ADMIN_PASSWORD = crypto.randomBytes(15).toString('base64url');
+  console.warn('AVISO: no se ha definido la variable de entorno ADMIN_PASSWORD.');
+  console.warn('Se ha generado una contraseña temporal para este arranque:');
+  console.warn(`  ${ADMIN_PASSWORD}`);
+  console.warn('Defínela para tener una contraseña estable entre reinicios.');
+}
+
 const DATA_DIR = path.join(BASE_DIR, 'data');
 const PROYECTOS_FILE = path.join(DATA_DIR, 'proyectos.json');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
@@ -55,6 +67,49 @@ const mimeTypes = {
   '.ico':  'image/x-icon',
   '.json': 'application/json',
 };
+
+// ===== CONTROL DE ARCHIVOS PÚBLICOS =====
+// El servidor solo sirve archivos del sitio. Todo lo demás (repositorio Git,
+// datos del portfolio, código del servidor y de configuración) queda fuera.
+
+const PUBLIC_EXTENSIONS = new Set([
+  '.html', '.css', '.js', '.png', '.jpg', '.jpeg', '.webp',
+  '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.txt',
+]);
+
+// Directorios internos que nunca deben servirse.
+const BLOCKED_DIRS = new Set(['data', 'node_modules', '.git', '.vercel', '.vscode']);
+
+// Archivos internos que nunca deben servirse.
+const BLOCKED_FILES = new Set(['server.js', 'package.json', 'package-lock.json']);
+
+function isPublicFile(requestedPath) {
+  if (!requestedPath) return false;
+
+  const segments = requestedPath.split('/').filter(Boolean);
+  if (segments.length === 0) return true; // raíz -> index.html
+
+  // Nada que empiece por punto (.git, .htaccess, .env, .vercel...)
+  if (segments.some(s => s.startsWith('.'))) return false;
+
+  // Directorios internos
+  if (BLOCKED_DIRS.has(segments[0].toLowerCase())) return false;
+
+  const last = segments[segments.length - 1];
+
+  // Archivos internos concretos
+  if (BLOCKED_FILES.has(last.toLowerCase())) return false;
+
+  // Lista blanca de extensiones. También se permite una ruta sin extensión
+  // para poder servir el index.html de un subdirectorio.
+  const ext = path.extname(last).toLowerCase();
+  return ext === '' || PUBLIC_EXTENSIONS.has(ext);
+}
+
+function sendNotFound(res) {
+  res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('Archivo no encontrado');
+}
 
 const server = http.createServer((req, res) => {
   // Sanitizar la URL: quitar query string y decodificar
@@ -173,19 +228,25 @@ const server = http.createServer((req, res) => {
 
   // ===== SERVIR ARCHIVOS ESTÁTICOS =====
   const requestedPath = rawUrl === '/' ? 'index.html' : decodedUrl.replace(/^\/+/, '');
+
+  // Solo se sirven archivos del sitio. Las rutas internas (repositorio Git,
+  // datos, código del servidor) responden 404, igual que una ruta inexistente.
+  if (!isPublicFile(requestedPath)) {
+    sendNotFound(res);
+    return;
+  }
+
   let filePath = path.join(BASE_DIR, requestedPath);
 
   // Protección path traversal: el archivo debe estar dentro de BASE_DIR
   if (!filePath.startsWith(BASE_DIR + path.sep) && filePath !== BASE_DIR) {
-    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Acceso denegado');
+    sendNotFound(res);
     return;
   }
 
   fs.stat(filePath, (statErr, stats) => {
     if (statErr) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Archivo no encontrado');
+      sendNotFound(res);
       return;
     }
 
@@ -199,8 +260,7 @@ const server = http.createServer((req, res) => {
 
     fs.readFile(filePath, (err, data) => {
       if (err) {
-        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-        res.end('Archivo no encontrado');
+        sendNotFound(res);
         return;
       }
       res.writeHead(200, {

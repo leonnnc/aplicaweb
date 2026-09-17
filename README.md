@@ -1,15 +1,16 @@
 # aplicaweb — Portfolio Personal
 
-Página web de portfolio personal para presentar y compartir trabajos de forma profesional. Diseño minimalista, limpio y enfocado en mostrar cada proyecto con impacto visual.
+Portfolio web dinámico con panel de administración propio. Los proyectos se gestionan desde el navegador y se guardan en el servidor, sin tocar código.
 
 ---
 
 ## Vista general
 
-- **Carrusel hero** en la página principal con frases de presentación
-- **Sección de trabajos** donde cada proyecto ocupa el ancho completo de la pantalla
-- **Panel de control (admin)** para agregar, editar y eliminar proyectos sin tocar el código
-- **Formulario de contacto** para que quien visite el portfolio pueda escribirte
+- **Carrusel hero** generado automáticamente a partir de los proyectos: cada proyecto aporta su propio slide con título, descripción, color o imagen de fondo
+- **Sección de trabajos** donde cada proyecto ocupa el ancho completo de la pantalla, alternando el lado de la imagen
+- **Panel de control** para agregar, editar y eliminar proyectos sin editar ningún archivo
+- **Importación desde GitHub**: busca tus repositorios y rellena el formulario automáticamente
+- **Formulario de contacto** configurable con Formspree
 - Diseño **responsivo** para móvil, tablet y escritorio
 
 ---
@@ -18,10 +19,13 @@ Página web de portfolio personal para presentar y compartir trabajos de forma p
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | HTML5, CSS3, JavaScript (Vanilla) |
-| Servidor local | Node.js (http nativo) |
-| Almacenamiento | localStorage del navegador |
+| Frontend | HTML5, CSS3, JavaScript vanilla |
+| Servidor | Node.js (módulo `http` nativo, sin dependencias) |
+| Persistencia | Archivos JSON en `data/` a través de una API REST |
+| Autenticación | Contraseña por variable de entorno + token Bearer en memoria |
 | Control de versiones | Git + GitHub |
+
+No hay dependencias externas: no hace falta `npm install`.
 
 ---
 
@@ -29,15 +33,27 @@ Página web de portfolio personal para presentar y compartir trabajos de forma p
 
 ```
 aplicaweb/
-├── index.html      # Página principal del portfolio
-├── styles.css      # Estilos del portfolio
-├── script.js       # Lógica del portfolio (carrusel, proyectos dinámicos)
-├── admin.html      # Panel de control
-├── admin.css       # Estilos del panel
-├── admin.js        # Lógica del panel (login, CRUD de proyectos)
-├── server.js       # Servidor local Node.js
+├── index.html            # Sitio público (carrusel, trabajos, contacto)
+├── styles.css            # Estilos del sitio público
+├── script.js             # Carrusel, render de proyectos y formulario
+├── admin.html            # Panel de control
+├── admin.css             # Estilos del panel
+├── admin.js              # Login, CRUD, subida de imágenes, importación de GitHub
+├── server.js             # Servidor HTTP + API REST + archivos estáticos
+├── data/
+│   ├── proyectos.json    # Los proyectos del portfolio
+│   └── config.json       # Ajustes del sitio (título, enlaces, email, Formspree)
+├── .htaccess             # Rewrite para hosting Apache (no lo usa Node)
+├── .gitignore
 └── README.md
 ```
+
+---
+
+## Requisitos
+
+- Node.js 18 o superior (probado con Node 22)
+- Puerto 5720 libre — o el que definas con la variable `PORT`
 
 ---
 
@@ -50,56 +66,92 @@ git clone https://github.com/leonnnc/aplicaweb.git
 cd aplicaweb
 ```
 
-### 2. Levantar el servidor local
+### 2. Definir la contraseña del panel
+
+La contraseña **ya no está en el código**: se lee de la variable de entorno `ADMIN_PASSWORD`.
+
+```bash
+# Linux / macOS
+export ADMIN_PASSWORD="tu-contraseña"
+
+# Windows (PowerShell)
+$env:ADMIN_PASSWORD="tu-contraseña"
+```
+
+> Si no la defines, el servidor genera una contraseña aleatoria en cada arranque y la imprime en la consola. Sirve para probar, pero cambia cada vez que reinicias.
+
+### 3. Levantar el servidor
 
 ```bash
 node server.js
 ```
 
-Abre tu navegador en **http://localhost:3000**
+Abre tu navegador en **http://localhost:5720**
 
-### 3. Acceder al panel de control
+### 4. Acceder al panel de control
 
-Navega a **http://localhost:3000/admin.html**
-
-- Contraseña por defecto: `admin123`
-- Puedes cambiarla en la primera línea de `admin.js`
+Navega a **http://localhost:5720/admin.html** e introduce la contraseña que definiste.
 
 ---
 
 ## Panel de control
 
-Desde el admin puedes gestionar todos tus proyectos sin editar código:
+### Proyectos
 
-- **Agregar** un nuevo proyecto con nombre, descripción, categoría, estado, tags, color y URL
+Cada proyecto tiene: nombre, descripción, categoría, estado, tags, imagen o color de fondo, URL de la web y URL de GitHub.
+
+- **Agregar** un proyecto nuevo
 - **Editar** cualquier proyecto existente
 - **Eliminar** proyectos
-- Los cambios se reflejan **automáticamente** en el portfolio
+- Los cambios se escriben en `data/proyectos.json` y se reflejan al recargar el sitio
 
-### Estados disponibles
-- `En Progreso` — proyecto activo
-- `Completado` — proyecto terminado
-- `Próximamente` — proyecto planeado
+**Estados disponibles:** `En Progreso`, `Completado`, `Próximamente`
+**Categorías disponibles:** `Web`, `Diseño`, `App`, `Otro`
+
+### Imágenes
+
+Puedes arrastrar una imagen o seleccionarla desde el explorador. Se redimensiona a un máximo de 1000×1000 píxeles y se comprime en el navegador antes de subirse, y se guarda como base64 dentro de `data/proyectos.json`.
+
+**Ojo con esto:** al ir en base64 dentro del JSON, cada imagen engorda el archivo y, si el proyecto está en Git, engorda también el historial de forma irreversible. Conviene subir imágenes ya ligeras.
+
+### Importación desde GitHub
+
+En la vista de proyecto, el botón **Buscar en GitHub** lista los repositorios de un usuario y rellena el formulario con los datos del repo elegido (nombre, descripción, lenguaje, URL, temas). El usuario y el token personal se guardan en el `localStorage` del navegador — úsalos solo desde tu equipo personal.
+
+### Ajustes
+
+Título del portfolio, URL de GitHub, URL de LinkedIn, email de contacto y Formspree Form ID.
+
+---
+
+## API REST
+
+| Método | Ruta | Autenticación | Descripción |
+|--------|------|---------------|-------------|
+| POST | `/api/login` | No | Devuelve un token a cambio de la contraseña |
+| GET | `/api/proyectos` | No | Lista de proyectos |
+| POST | `/api/proyectos` | Token Bearer | Reemplaza la lista completa de proyectos |
+| GET | `/api/config` | No | Ajustes del sitio |
+| POST | `/api/config` | Token Bearer | Reemplaza los ajustes del sitio |
+
+Ejemplo de login:
+
+```bash
+curl -X POST http://localhost:5720/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"password":"tu-contraseña"}'
+```
+
+Los tokens se guardan en memoria del servidor: se pierden al reiniciar y no caducan mientras el proceso siga vivo.
 
 ---
 
 ## Personalización
 
-### Cambiar la contraseña del admin
-En `admin.js`, línea 2:
-```js
-const PASSWORD = 'tu-nueva-contraseña';
-```
+### Cambiar los colores del tema
 
-### Cambiar textos del carrusel
-En `index.html`, dentro de cada `.slide`:
-```html
-<h1>Tu título aquí</h1>
-<p>Tu descripción aquí</p>
-```
-
-### Cambiar colores del tema
 En `styles.css`, sección `:root`:
+
 ```css
 :root {
   --bg: #0d0d0d;       /* fondo principal */
@@ -108,22 +160,45 @@ En `styles.css`, sección `:root`:
 }
 ```
 
+### Cambiar el puerto
+
+```bash
+PORT=8080 node server.js
+```
+
 ---
 
 ## Despliegue
 
-### GitHub Pages (gratis)
-1. Sube el repositorio a GitHub
-2. Ve a **Settings → Pages**
-3. Selecciona la rama `main` y carpeta `/root`
-4. Tu portfolio estará en `https://leonnnc.github.io/aplicaweb`
+### Hosting con Node.js (recomendado)
 
-> **Nota:** GitHub Pages sirve archivos estáticos. El `server.js` no es necesario en producción.
+Es la única forma de que el panel de administración funcione de verdad. Sube el proyecto a un hosting que ejecute Node y:
 
-### cPanel / Hosting tradicional
-1. Comprime los archivos: `index.html`, `styles.css`, `script.js`, `admin.html`, `admin.css`, `admin.js`
-2. Sube el `.zip` al **Administrador de archivos** en `public_html`
-3. Extrae y listo
+1. Define la variable de entorno `ADMIN_PASSWORD`
+2. Ejecuta `node server.js` (o `npm start`)
+3. El proceso debe tener permiso de escritura sobre `data/`
+
+### Vercel
+
+El proyecto está desplegado como función serverless. Ten en cuenta tres cosas:
+
+1. **Define `ADMIN_PASSWORD`** en *Settings → Environment Variables*. Si no lo haces, el panel usará una contraseña aleatoria distinta en cada arranque y no podrás entrar.
+2. **El sistema de archivos es de solo lectura.** Los cambios que hagas desde el panel no se guardan: `data/proyectos.json` se lee del repositorio, así que la única forma de actualizar el contenido es hacer commit y push.
+3. **Debe incluirse el proyecto entero**, no solo `server.js`. Si el despliegue incluye únicamente el servidor y `data/`, todas las páginas devolverán *"Archivo no encontrado"*, porque `server.js` sirve el HTML y el CSS desde el mismo directorio.
+
+### GitHub Pages y hosting estático
+
+**No funcionan con esta versión.** El sitio obtiene los proyectos de `/api/*`, y en un hosting estático esas rutas no existen: el portfolio se quedaría permanentemente vacío. Para usarlos habría que volver a un esquema sin API.
+
+---
+
+## Seguridad
+
+- La contraseña del panel se lee siempre de `ADMIN_PASSWORD`. No hay ninguna clave por defecto en el código.
+- El servidor solo sirve archivos del sitio. El repositorio Git, la carpeta `data/`, `server.js`, `package.json` y los archivos ocultos responden 404, de modo que no se puede descargar el código fuente ni los datos.
+- Los `POST` de la API exigen token Bearer.
+- El endpoint de login no tiene límite de intentos ni retardo progresivo: conviene protegerlo con un proxy o un WAF si el sitio va a estar expuesto en internet.
+- Los tokens no caducan mientras el servidor siga en marcha.
 
 ---
 
@@ -133,4 +208,4 @@ MIT — libre para usar, modificar y compartir.
 
 ---
 
-*Hecho con HTML, CSS y JavaScript puro.*
+*Hecho con HTML, CSS y JavaScript puro, y un servidor Node sin dependencias.*

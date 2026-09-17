@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (ADMIN_PASSWORD, tokens, etc.)
+.env
+.env.local
+.env.*.local
+
+# Logs y archivos temporales
+*.log
+npm-debug.log*
+yarn-error.log*
+aplicaweb-server.err
+
+# Archivos del sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+
+# NOTA sobre data/:
+# data/ SE VERSIONA A PROPÓSITO y no debe añadirse aquí.
+# El despliegue (Vercel) tiene el sistema de archivos de solo lectura y lee
+# data/proyectos.json desde el repositorio, así que el contenido del portfolio
+# vive en Git. Ten en cuenta que las imágenes subidas desde el panel se guardan
+# ahí en base64 y hacen crecer el historial de forma irreversible.
