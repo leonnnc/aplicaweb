@@ -63,5 +63,69 @@
     "url": "https://github.com/leonnnc/804",
     "githubUrl": "https://github.com/leonnnc/804",
     "imagen": "assets/proyectos/departamento-804.jpg"
+  },
+  {
+    "id": 5,
+    "nombre": "DentalControl",
+    "descripcion": "Web PWA para una clínica dental con portada de carrusel, servicios, especialistas y reserva de citas online con calendario, además de un panel de gestión local. Adaptada del sistema DentalControl Pro a una página pública.",
+    "categoria": "web",
+    "estado": "Completado",
+    "tags": [
+      "JavaScript",
+      "PWA",
+      "CSS3"
+    ],
+    "color": "linear-gradient(145deg,#1a1a0a,#2a3a1a)",
+    "url": "https://leonnnc.github.io/medisdent4/",
+    "githubUrl": "https://github.com/leonnnc/medisdent4",
+    "imagen": "assets/proyectos/dentalcontrol.jpg"
+  },
+  {
+    "id": 6,
+    "nombre": "Papá Luchó",
+    "descripcion": "Sistema web para pollería y parrillas con tres módulos en una sola página: landing pública, menú digital para hacer pedidos en mesa y panel de cocina en tiempo real, con carrito y reportes.",
+    "categoria": "web",
+    "estado": "Completado",
+    "tags": [
+      "HTML5",
+      "CSS3",
+      "JavaScript"
+    ],
+    "color": "linear-gradient(145deg,#1c1c1c,#3a2a2a)",
+    "url": "https://leonnnc.github.io/papalucho/",
+    "githubUrl": "https://github.com/leonnnc/papalucho",
+    "imagen": "assets/proyectos/papalucho.jpg"
+  },
+  {
+    "id": 7,
+    "nombre": "Twin Fusión Bartender",
+    "descripcion": "Web minimalista y totalmente responsive para un servicio de coctelería y barras móviles en eventos, con carrusel hero interactivo de cuatro vistas, soporte táctil y secciones de experiencias, servicios y cotizador.",
+    "categoria": "web",
+    "estado": "Completado",
+    "tags": [
+      "HTML5",
+      "CSS3",
+      "JavaScript"
+    ],
+    "color": "linear-gradient(145deg,#1a1a2e,#4a3f6b)",
+    "url": "https://leonnnc.github.io/barth/",
+    "githubUrl": "https://github.com/leonnnc/barth",
+    "imagen": "assets/proyectos/bartender.jpg"
+  },
+  {
+    "id": 8,
+    "nombre": "PhotoCDF",
+    "descripcion": "Plataforma completa del concurso fotográfico del Club de Fotografía: galería, perfil de participante, bases e inscripción. Construida con HTML5, CSS3, JavaScript con módulos ES y Firebase para autenticación, Firestore y Storage.",
+    "categoria": "web",
+    "estado": "Completado",
+    "tags": [
+      "JavaScript",
+      "Firebase",
+      "HTML5"
+    ],
+    "color": "linear-gradient(145deg,#0a1628,#1a3a4a)",
+    "url": "https://leonnnc.github.io/concurso/",
+    "githubUrl": "https://github.com/leonnnc/concurso",
+    "imagen": "assets/proyectos/photocdf.jpg"
   }
 ]

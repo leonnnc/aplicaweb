@@ -51,6 +51,10 @@ try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'servitech.jpg')); 
 try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'autoredactor.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/autoredactor.jpg'); }
 try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'puragracia.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/puragracia.jpg'); }
 try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'departamento-804.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/departamento-804.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'dentalcontrol.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/dentalcontrol.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'papalucho.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/papalucho.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'bartender.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/bartender.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'photocdf.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/photocdf.jpg'); }
 
 if (archivosFaltantes.length > 0) {
   console.warn('AVISO: faltan archivos del sitio en este despliegue: ' + archivosFaltantes.join(', '));
