@@ -14,6 +14,11 @@ let currentProyectos = [];
 let currentSiteConfig = {};
 
 // ===== OBTENER DATOS DEL SERVIDOR API =====
+// Orden de búsqueda: API -> JSON del repositorio -> localStorage.
+// El paso intermedio es para el alojamiento estático (GitHub Pages), donde no
+// existe la API pero sí se sirve data/proyectos.json. La ruta es relativa a
+// propósito: GitHub Pages publica el sitio en un subdirectorio (/aplicaweb/),
+// así que una ruta absoluta /data/proyectos.json daría 404.
 async function fetchProyectos() {
   try {
     const res = await fetch('/api/proyectos');
@@ -22,8 +27,19 @@ async function fetchProyectos() {
       if (Array.isArray(data) && data.length > 0) return data;
     }
   } catch (err) {
-    console.warn('Servidor offline o sin proyectos, usando localStorage/fallback');
+    console.warn('API no disponible, probando el archivo estático');
   }
+
+  try {
+    const res = await fetch('data/proyectos.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn('Sin acceso a data/proyectos.json');
+  }
+
   const stored = localStorage.getItem('portfolio_proyectos');
   return stored ? JSON.parse(stored) : [];
 }
@@ -33,8 +49,16 @@ async function fetchSiteConfig() {
     const res = await fetch('/api/config');
     if (res.ok) return await res.json();
   } catch (err) {
-    console.warn('Config offline');
+    console.warn('API no disponible, probando el archivo estático');
   }
+
+  try {
+    const res = await fetch('data/config.json');
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Sin acceso a data/config.json');
+  }
+
   const stored = localStorage.getItem('portfolio_site_config');
   return stored ? JSON.parse(stored) : {};
 }

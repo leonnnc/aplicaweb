@@ -188,7 +188,14 @@ El proyecto está desplegado como función serverless. Ten en cuenta tres cosas:
 
 ### GitHub Pages y hosting estático
 
-**No funcionan con esta versión.** El sitio obtiene los proyectos de `/api/*`, y en un hosting estático esas rutas no existen: el portfolio se quedaría permanentemente vacío. Para usarlos habría que volver a un esquema sin API.
+Funciona como **escaparate de solo lectura**. `script.js` busca los datos en este orden: API → `data/proyectos.json` → `localStorage`. Como en un hosting estático no hay API pero sí se sirve el JSON del repositorio, el portfolio se ve igual.
+
+Lo que **no** funciona ahí:
+
+- **El panel de administración**, porque no hay API que reciba los cambios. Para actualizar el contenido hay que editar `data/proyectos.json` y hacer commit.
+- El servidor deja de filtrar rutas: al no haber Node, cualquiera puede descargar `server.js` o `data/*.json` como si fueran páginas. En un repositorio ya público no cambia nada, pero conviene saberlo.
+
+La ruta del respaldo es **relativa** a propósito (`data/proyectos.json`, sin barra inicial), porque GitHub Pages sirve el sitio en un subdirectorio (`/aplicaweb/`).
 
 ---
 
