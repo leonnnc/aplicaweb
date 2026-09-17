@@ -1,6 +1,6 @@
 {
   "name": "aplicaweb",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Portfolio web dinámico con API REST en Node.js y panel de administración",
   "main": "server.js",
   "scripts": {

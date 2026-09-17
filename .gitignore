@@ -21,6 +21,10 @@ desktop.ini
 .vscode/
 .idea/
 
+# Material de diagnóstico local (capturas y mediciones de maquetación).
+# No forma parte del sitio: se queda en el equipo y no se publica.
+assets/diagnostico/
+
 # NOTA sobre data/:
 # data/ SE VERSIONA A PROPÓSITO y no debe añadirse aquí.
 # El despliegue (Vercel) tiene el sistema de archivos de solo lectura y lee
