@@ -44,6 +44,14 @@ try { fs.statSync(path.join(BASE_DIR, 'admin.html')); } catch (e) { archivosFalt
 try { fs.statSync(path.join(BASE_DIR, 'admin.css')); } catch (e) { archivosFaltantes.push('admin.css'); }
 try { fs.statSync(path.join(BASE_DIR, 'admin.js')); } catch (e) { archivosFaltantes.push('admin.js'); }
 
+// Capturas de los proyectos. Al igual que los archivos de arriba, se declaran
+// con rutas literales para que el empaquetador las incluya en el despliegue.
+// Si se añaden más imágenes en assets/, hay que declararlas también aquí.
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'servitech.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/servitech.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'autoredactor.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/autoredactor.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'puragracia.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/puragracia.jpg'); }
+try { fs.statSync(path.join(BASE_DIR, 'assets', 'proyectos', 'departamento-804.jpg')); } catch (e) { archivosFaltantes.push('assets/proyectos/departamento-804.jpg'); }
+
 if (archivosFaltantes.length > 0) {
   console.warn('AVISO: faltan archivos del sitio en este despliegue: ' + archivosFaltantes.join(', '));
 }
