@@ -1,42 +1,63 @@
 [
   {
     "id": 1,
-    "nombre": "Proyecto Web",
-    "descripcion": "Aplicación web moderna construida con React y Node.js. Autenticación, dashboard y API REST completa.",
+    "nombre": "Servitech",
+    "descripcion": "App de soporte técnico en campo: empresas, equipos, banco de tareas, costos de servicios, repuestos e informes con firma y PDF. HTML, CSS y JavaScript puro, con los datos en el dispositivo y sincronización con Firebase.",
     "categoria": "web",
     "estado": "En Progreso",
-    "tags": ["React", "Node.js", "MongoDB"],
-    "color": "linear-gradient(145deg,#1a1a2e,#4a3f6b)",
-    "url": "#"
+    "tags": [
+      "JavaScript",
+      "PWA",
+      "Firebase"
+    ],
+    "color": "linear-gradient(145deg,#0a1628,#1a3a4a)",
+    "url": "https://github.com/leonnnc/Servictech",
+    "githubUrl": "https://github.com/leonnnc/Servictech"
   },
   {
     "id": 2,
-    "nombre": "Diseño UI/UX",
-    "descripcion": "Diseño de interfaz para aplicación móvil. Flujo completo desde wireframe hasta prototipo interactivo.",
-    "categoria": "diseño",
+    "nombre": "AutoRedactor",
+    "descripcion": "Editor de diapositivas para prédicas e iglesias: convierte el texto en diapositivas listas para proyectar, con búsqueda bíblica integrada y exportación a PDF, PPTX y ZIP. Disponible como web app y como aplicación de escritorio.",
+    "categoria": "web",
     "estado": "Completado",
-    "tags": ["Figma", "UI/UX", "Prototipo"],
-    "color": "linear-gradient(145deg,#1c1c1c,#3a2a2a)",
-    "url": "#"
+    "tags": [
+      "React",
+      "TypeScript",
+      "Tauri",
+      "PWA"
+    ],
+    "color": "linear-gradient(145deg,#1a1a2e,#4a3f6b)",
+    "url": "https://leonnnc.github.io/AutoRedactor/",
+    "githubUrl": "https://github.com/leonnnc/AutoRedactor"
   },
   {
     "id": 3,
-    "nombre": "App Mobile",
-    "descripcion": "Aplicación de gestión de tareas para Android e iOS con sincronización en tiempo real.",
-    "categoria": "app",
-    "estado": "En Progreso",
-    "tags": ["Flutter", "Dart", "Firebase"],
-    "color": "linear-gradient(145deg,#0a1628,#1a3a4a)",
-    "url": "#"
+    "nombre": "Pura Gracia",
+    "descripcion": "Plataforma de oración comunitaria con altar mundial en tiempo real: peticiones por categorías, mapa con los intercesores conectados, micrófono en vivo con turnos de cinco minutos y panel de administración multi-país.",
+    "categoria": "web",
+    "estado": "Completado",
+    "tags": [
+      "JavaScript",
+      "Leaflet",
+      "Firebase"
+    ],
+    "color": "linear-gradient(145deg,#0a2a1a,#1a4a3a)",
+    "url": "https://github.com/leonnnc/puragracia",
+    "githubUrl": "https://github.com/leonnnc/puragracia"
   },
   {
     "id": 4,
-    "nombre": "E-commerce",
-    "descripcion": "Tienda online completa con carrito de compras, pasarela de pagos y panel de administración.",
+    "nombre": "Departamento 804",
+    "descripcion": "Sitio web para un departamento de alquiler en Pueblo Libre, Lima: galería de fotos con modal, amenidades, reseñas de huéspedes, reservas que llegan por WhatsApp y un sistema interno de gestión de limpieza.",
     "categoria": "web",
-    "estado": "En Progreso",
-    "tags": ["HTML", "CSS", "JavaScript"],
-    "color": "linear-gradient(145deg,#1a1a0a,#2a3a1a)",
-    "url": "#"
+    "estado": "Completado",
+    "tags": [
+      "HTML5",
+      "Bootstrap",
+      "JavaScript"
+    ],
+    "color": "linear-gradient(145deg,#2a1a1a,#4a2a2a)",
+    "url": "https://github.com/leonnnc/804",
+    "githubUrl": "https://github.com/leonnnc/804"
   }
 ]
