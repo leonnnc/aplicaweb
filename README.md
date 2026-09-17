@@ -184,7 +184,7 @@ El proyecto está desplegado como función serverless. Ten en cuenta tres cosas:
 
 1. **Define `ADMIN_PASSWORD`** en *Settings → Environment Variables*. Si no lo haces, el panel usará una contraseña aleatoria distinta en cada arranque y no podrás entrar.
 2. **El sistema de archivos es de solo lectura.** Los cambios que hagas desde el panel no se guardan: `data/proyectos.json` se lee del repositorio, así que la única forma de actualizar el contenido es hacer commit y push.
-3. **Debe incluirse el proyecto entero**, no solo `server.js`. Si el despliegue incluye únicamente el servidor y `data/`, todas las páginas devolverán *"Archivo no encontrado"*, porque `server.js` sirve el HTML y el CSS desde el mismo directorio.
+3. **Los archivos del sitio tienen que viajar dentro del paquete de la función.** Vercel decide qué archivos incluye con análisis estático (*Node File Trace*). Como las rutas de los archivos estáticos se construyen a partir de la URL de cada petición, no puede deducirlas, y el resultado es que todas las páginas responden *"Archivo no encontrado"* mientras la API funciona con normalidad. `server.js` declara esos archivos con rutas literales al arrancar precisamente para que el empaquetador los incluya. **Si añades un archivo estático nuevo, añádelo también a esa lista.**
 
 ### GitHub Pages y hosting estático
 

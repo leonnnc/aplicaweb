@@ -27,6 +27,27 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+// ===== ARCHIVOS DEL SITIO =====
+// Los archivos estáticos se resuelven a partir de la URL de cada petición, así
+// que el análisis estático que Vercel aplica al empaquetar la función (Node File
+// Trace) no puede deducir cuáles son y los deja fuera del despliegue. Eso hacía
+// que el sitio respondiera 404 en todas sus páginas mientras la API funcionaba.
+//
+// Las comprobaciones de abajo usan rutas literales: sirven para declarar los
+// archivos al empaquetador y, de paso, avisan en el log si un despliegue llega
+// incompleto.
+const archivosFaltantes = [];
+try { fs.statSync(path.join(BASE_DIR, 'index.html')); } catch (e) { archivosFaltantes.push('index.html'); }
+try { fs.statSync(path.join(BASE_DIR, 'styles.css')); } catch (e) { archivosFaltantes.push('styles.css'); }
+try { fs.statSync(path.join(BASE_DIR, 'script.js')); } catch (e) { archivosFaltantes.push('script.js'); }
+try { fs.statSync(path.join(BASE_DIR, 'admin.html')); } catch (e) { archivosFaltantes.push('admin.html'); }
+try { fs.statSync(path.join(BASE_DIR, 'admin.css')); } catch (e) { archivosFaltantes.push('admin.css'); }
+try { fs.statSync(path.join(BASE_DIR, 'admin.js')); } catch (e) { archivosFaltantes.push('admin.js'); }
+
+if (archivosFaltantes.length > 0) {
+  console.warn('AVISO: faltan archivos del sitio en este despliegue: ' + archivosFaltantes.join(', '));
+}
+
 // Almacén de tokens activos en memoria
 const validTokens = new Set();
 
