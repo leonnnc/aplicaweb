@@ -97,12 +97,14 @@ a { text-decoration: none; color: inherit; }
   position: relative;
   display: flex;
   align-items: flex-end;
+  overflow: hidden;   /* recorta el fondo desenfocado de .slide-bg-img */
 }
 
 /* Imagen de fondo del slide usando <img> real (soporta base64 grandes).
-   Va muy atenuada a propósito: la captura es una web con su propio titular y
-   CTA, y si se ve a plena luz compite con el texto de este slide y parece que
-   hay dos páginas superpuestas. Atenuada funciona como textura de fondo. */
+   Va desenfocada y atenuada a propósito: la captura es una web con su propio
+   titular y sus botones, y si se ve nítida compite con el texto de este slide
+   y parece que hay dos páginas superpuestas. Desenfocada, el texto de la
+   captura deja de ser legible y solo quedan sus colores, como fondo. */
 .slide-bg-img {
   position: absolute;
   inset: 0;
@@ -111,7 +113,8 @@ a { text-decoration: none; color: inherit; }
   object-fit: cover;
   object-position: center;
   z-index: 0;
-  filter: brightness(0.32) saturate(0.9);
+  filter: brightness(0.42) saturate(1.05) blur(18px);
+  transform: scale(1.15);
 }
 
 /* Overlay oscuro sobre imagen */
